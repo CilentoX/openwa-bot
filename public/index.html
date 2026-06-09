@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenWA - Bot Console & Dashboard</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Style Link -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-container">
+        <div class="logo-icon">🤖</div>
+        <div class="logo-text">
+          <h1 id="app-title-name">OpenWA <span class="accent-text">Bot Console</span></h1>
+          <p class="subtitle">Gerenciador Multissessões & Configuração em SQLite</p>
+        </div>
+      </div>
+      
+      <!-- Session Selector Header -->
+      <div class="session-selector-container">
+        <label for="session-select">Sessão Ativa:</label>
+        <div class="select-wrapper">
+          <select id="session-select">
+            <option value="">Carregando sessões...</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navbar">
+      <button class="tab-button active" data-tab="config">⚙️ Configuração</button>
+      <button class="tab-button" data-tab="commands">🤖 Comandos</button>
+      <button class="tab-button" data-tab="qna">💬 Q&A (Auto-Respostas)</button>
+      <button class="tab-button" data-tab="monitor">📡 Monitor (Chat/Sessões)</button>
+      <button class="tab-button" data-tab="stats">📊 Estatísticas</button>
+    </nav>
+
+    <!-- Tab Contents -->
+    <main class="tab-content">
+
+      <!-- ==================== TAB 1: CONFIGURATION ==================== -->
+      <div class="tab-pane active" id="tab-config">
+        <div class="config-grid">
+          <!-- Config Form Card -->
+          <div class="card config-card-main">
+            <div class="card-header">
+              <h3>⚙️ Configurações Gerais do Bot</h3>
+            </div>
+            <div class="card-body">
+              <p class="card-description">
+                Configure as credenciais e parâmetros de conexão com o OpenWA Gateway. Essas configurações são salvas diretamente no banco de dados SQLite local.
+              </p>
+              <form id="config-form" class="dashboard-form">
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label for="config-openwa-url">URL do OpenWA Gateway</label>
+                    <input type="url" id="config-openwa-url" placeholder="https://api-openwa.qwertyatlas.online" required>
+                    <small class="input-tip">A URL base da API do gateway OpenWA (será adicionado /api automaticamente se necessário).</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="config-api-key">Chave de API (x-api-key)</label>
+                    <div class="password-wrapper">
+                      <input type="password" id="config-api-key" placeholder="Digite sua chave de API master...">
+                      <button type="button" class="btn-toggle-password" id="toggle-api-key-visibility">👁️</button>
+                    </div>
+                    <small class="input-tip">Chave de autenticação configurada na sua instância em nuvem do OpenWA.</small>
+                  </div>
+                </div>
+
+                <div class="form-grid-3">
+                  <div class="form-group">
+                    <label for="config-default-session">Sessão Padrão do Bot</label>
+                    <input type="text" id="config-default-session" placeholder="Ex: ab22b8ca-51d">
+                    <small class="input-tip">ID da sessão utilizada pelo bot para receber webhook e disparar mensagens.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="config-bot-name">Nome do Bot</label>
+                    <input type="text" id="config-bot-name" placeholder="Ex: Meu OpenWA Bot">
+                    <small class="input-tip">Nome que aparecerá no cabeçalho do console.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="config-bot-port">Porta do Console</label>
+                    <input type="number" id="config-bot-port" placeholder="3000" min="1024" max="65535" required>
+                    <small class="input-tip">Porta do servidor Fastify local (requer reiniciar o bot para aplicar).</small>
+                  </div>
+                </div>
+
+                <div class="form-actions-right">
+                  <button type="submit" class="btn btn-primary">
+                    <span>Salvar Configurações</span>
+                  </button>
+                </div>
+              </form>
+              <div id="config-feedback" class="feedback-message"></div>
+            </div>
+          </div>
+
+          <!-- Connection Status Card -->
+          <div class="card status-check-card">
+            <div class="card-header">
+              <h3>📡 Status da Integração</h3>
+            </div>
+            <div class="card-body status-center">
+              <div class="status-indicator-box">
+                <span class="status-dot offline" id="connection-dot"></span>
+                <span class="status-text-large" id="connection-text">Desconectado</span>
+              </div>
+              <div class="status-details">
+                <p><strong>URL Gateway:</strong> <span id="status-url-display">-</span></p>
+                <p><strong>Health Check:</strong> <span id="status-health-display">-</span></p>
+                <p><strong>Sessões Ativas:</strong> <span id="status-sessions-count">-</span></p>
+              </div>
+              <button class="btn btn-secondary btn-block" id="btn-test-connection" style="margin-top: 16px;">
+                <span>Testar Conexão</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: COMMANDS ==================== -->
+      <div class="tab-pane" id="tab-commands">
+        <div class="two-col-grid">
+          <!-- Command Form (Left) -->
+          <div class="card">
+            <div class="card-header">
+              <h3 id="command-form-title">🤖 Criar Novo Comando</h3>
+            </div>
+            <div class="card-body">
+              <form id="command-form" class="dashboard-form">
+                <input type="hidden" id="command-id">
+                
+                <div class="form-group">
+                  <label for="command-trigger">Gatilho (Trigger)</label>
+                  <input type="text" id="command-trigger" placeholder="Ex: !ajuda ou 1" required>
+                  <small class="input-tip">O texto exato que o cliente deve enviar (case-insensitive).</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="command-type">Tipo de Resposta</label>
+                  <select id="command-type" class="dashboard-select">
+                    <option value="static">Texto Estático (Resposta Direta)</option>
+                    <option value="dynamic">Dinâmico (Lógica Customizada do Servidor)</option>
+                  </select>
+                  <small class="input-tip">Dinâmico permite processar funções como data, hora, etc.</small>
+                </div>
+
+                <div class="form-group" id="command-response-group">
+                  <label for="command-response">Mensagem de Resposta</label>
+                  <textarea id="command-response" rows="5" placeholder="Digite a resposta que o bot enviará..."></textarea>
+                  <small class="input-tip">Suporta formatação do WhatsApp (*negrito*, _itálico_).</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="command-description">Descrição Interna</label>
+                  <input type="text" id="command-description" placeholder="Ex: Exibe ajuda para o usuário">
+                  <small class="input-tip">Para ajudar no gerenciamento no dashboard.</small>
+                </div>
+
+                <div class="form-group row-checkbox">
+                  <input type="checkbox" id="command-enabled" checked>
+                  <label for="command-enabled">Habilitar comando imediatamente</label>
+                </div>
+
+                <div class="form-actions-flex">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-command" style="display:none;">Cancelar</button>
+                  <button type="submit" class="btn btn-accent" id="btn-save-command">Salvar Comando</button>
+                </div>
+              </form>
+              <div id="command-feedback" class="feedback-message"></div>
+            </div>
+          </div>
+
+          <!-- Command Table (Right) -->
+          <div class="card">
+            <div class="card-header header-with-search">
+              <h3>📋 Comandos Registrados</h3>
+              <input type="text" id="command-search" placeholder="🔍 Filtrar comandos..." class="search-input-small">
+            </div>
+            <div class="card-body table-responsive">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Gatilho</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="commands-table-body">
+                  <!-- Load dynamically -->
+                </tbody>
+              </table>
+              <div class="empty-table-placeholder" id="commands-empty" style="display:none;">
+                Nenhum comando cadastrado.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: Q&A ==================== -->
+      <div class="tab-pane" id="tab-qna">
+        <div class="two-col-grid">
+          <!-- Q&A Form (Left) -->
+          <div class="card">
+            <div class="card-header">
+              <h3 id="qna-form-title">💬 Nova Regra de Auto-Resposta (Q&A)</h3>
+            </div>
+            <div class="card-body">
+              <form id="qna-form" class="dashboard-form">
+                <input type="hidden" id="qna-id">
+
+                <div class="form-group">
+                  <label for="qna-question">Gatilho / Pergunta do Usuário</label>
+                  <input type="text" id="qna-question" placeholder="Ex: ola, bom dia, valor" required>
+                  <small class="input-tip">Texto a ser procurado na mensagem de entrada.</small>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label for="qna-match-type">Tipo de Correspondência</label>
+                    <select id="qna-match-type" class="dashboard-select">
+                      <option value="contains">Contém a palavra (Recomendado)</option>
+                      <option value="exact">Igual exato (Match 1:1)</option>
+                      <option value="regex">Expressão Regular (Regex)</option>
+                    </select>
+                    <small class="input-tip">Como a entrada será comparada.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="qna-priority">Prioridade de Execução</label>
+                    <input type="number" id="qna-priority" placeholder="0" min="0" value="0">
+                    <small class="input-tip">Maior número executa primeiro.</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="qna-answer">Resposta Automática</label>
+                  <textarea id="qna-answer" rows="5" placeholder="Digite a resposta do bot..." required></textarea>
+                </div>
+
+                <div class="form-group row-checkbox">
+                  <input type="checkbox" id="qna-enabled" checked>
+                  <label for="qna-enabled">Habilitar resposta imediatamente</label>
+                </div>
+
+                <div class="form-actions-flex">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-qna" style="display:none;">Cancelar</button>
+                  <button type="submit" class="btn btn-accent" id="btn-save-qna">Salvar Regra Q&A</button>
+                </div>
+              </form>
+              <div id="qna-feedback" class="feedback-message"></div>
+            </div>
+          </div>
+
+          <!-- Q&A Table (Right) -->
+          <div class="card">
+            <div class="card-header header-with-search">
+              <h3>📋 Perguntas & Respostas Ativas</h3>
+              <input type="text" id="qna-search" placeholder="🔍 Filtrar perguntas..." class="search-input-small">
+            </div>
+            <div class="card-body table-responsive">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Gatilho (Pergunta)</th>
+                    <th>Tipo</th>
+                    <th>Prioridade</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="qna-table-body">
+                  <!-- Load dynamically -->
+                </tbody>
+              </table>
+              <div class="empty-table-placeholder" id="qna-empty" style="display:none;">
+                Nenhuma regra Q&A cadastrada.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: MONITOR ==================== -->
+      <div class="tab-pane" id="tab-monitor">
+        <div class="dashboard-grid">
+          <!-- COLUMN 1: SESSIONS & GROUPS -->
+          <section class="grid-col left-column">
+            <!-- Session Info Card -->
+            <div class="card status-details-card">
+              <div class="card-header">
+                <h3>🔌 Detalhes da Sessão</h3>
+              </div>
+              <div class="card-body">
+                <div class="info-row">
+                  <span class="info-label">Nome:</span>
+                  <span class="info-value bold" id="info-session-name">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Número:</span>
+                  <span class="info-value" id="info-session-phone">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Nome do Perfil:</span>
+                  <span class="info-value" id="info-session-pushname">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Status:</span>
+                  <span class="info-value" id="info-session-status">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Conectado em:</span>
+                  <span class="info-value" id="info-session-connected-at">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Groups Card -->
+            <div class="card groups-card">
+              <div class="card-header">
+                <div class="header-with-search">
+                  <h3>👥 Grupos da Sessão</h3>
+                  <input type="text" id="group-search" placeholder="🔍 Filtrar grupos..." class="search-input-small">
+                </div>
+              </div>
+              <div class="card-body groups-container" id="groups-list">
+                <!-- Groups will be dynamically listed here -->
+                <div class="no-groups-placeholder">
+                  <p>Nenhum grupo carregado.</p>
+                  <p class="placeholder-sub">Selecione uma sessão ativa ou conectada para ver seus grupos.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- COLUMN 2: LIVE FEED -->
+          <section class="grid-col feed-column">
+            <div class="card chat-feed-card">
+              <div class="card-header">
+                <div class="header-with-actions">
+                  <h3>💬 Monitor de Mensagens (Local)</h3>
+                  <div class="header-buttons">
+                    <button class="btn btn-small btn-clear" id="btn-clear-feed">Limpar Feed</button>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body messages-container" id="messages-feed">
+                <!-- Messages will be injected here -->
+                <div class="no-messages-placeholder">
+                  <div class="placeholder-icon">📡</div>
+                  <p>Nenhuma mensagem recebida ou enviada ainda.</p>
+                  <p class="placeholder-sub">Aguardando eventos do webhook do OpenWA...</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- COLUMN 3: WEBHOOK & TEST ACTIONS -->
+          <section class="grid-col right-column">
+            <!-- Webhook Registration Card -->
+            <div class="card webhook-card">
+              <div class="card-header">
+                <h3>🔗 Configurar Webhook (Ngrok)</h3>
+              </div>
+              <div class="card-body">
+                <p class="card-description">
+                  Insira a URL do seu ngrok para registrá-la como webhook da sessão selecionada.
+                </p>
+                <form id="webhook-form" class="dashboard-form">
+                  <div class="form-group">
+                    <label for="webhook-url">URL do Webhook</label>
+                    <input type="url" id="webhook-url" placeholder="https://xxx-xx.ngrok-free.app/webhook" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block" id="btn-register-webhook">
+                    <span>Registrar Webhook</span>
+                  </button>
+                </form>
+                <div id="webhook-feedback" class="feedback-message"></div>
+              </div>
+            </div>
+
+            <!-- Send Message Tester -->
+            <div class="card send-message-card">
+              <div class="card-header">
+                <h3>📤 Enviar Mensagem de Teste</h3>
+              </div>
+              <div class="card-body">
+                <p class="card-description">
+                  Dispare mensagens para números ou grupos através da sessão selecionada. Clique em um grupo na lista da esquerda para preencher automaticamente.
+                </p>
+                <form id="send-form" class="dashboard-form">
+                  <div class="form-group">
+                    <label for="send-chat-id">Número de Telefone ou ID do Grupo (JID)</label>
+                    <input type="text" id="send-chat-id" placeholder="Ex: 5511999999999 ou JID@g.us" required>
+                    <small class="input-tip">Grupos terminam com @g.us, contatos com @c.us</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="send-text">Mensagem</label>
+                    <textarea id="send-text" rows="4" placeholder="Digite sua mensagem de teste..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-accent btn-block" id="btn-send-message">
+                    <span>Enviar via OpenWA</span>
+                  </button>
+                </form>
+                <div id="send-feedback" class="feedback-message"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 5: STATS ==================== -->
+      <div class="tab-pane" id="tab-stats">
+        <div class="stats-overview-grid">
+          <!-- Big counter stats -->
+          <div class="stat-card gradient-blue">
+            <div class="stat-card-title">📥 Mensagens Recebidas</div>
+            <div class="stat-card-value" id="stats-received-big">0</div>
+            <div class="stat-card-desc">Contador total local</div>
+          </div>
+          
+          <div class="stat-card gradient-green">
+            <div class="stat-card-title">📤 Mensagens Respondidas</div>
+            <div class="stat-card-value" id="stats-sent-big">0</div>
+            <div class="stat-card-desc">Contador total local</div>
+          </div>
+          
+          <div class="stat-card gradient-purple">
+            <div class="stat-card-title">💬 Histórico Total</div>
+            <div class="stat-card-value" id="stats-total-big">0</div>
+            <div class="stat-card-desc">Linhas registradas no SQLite</div>
+          </div>
+        </div>
+
+        <div class="two-col-grid" style="margin-top: 24px;">
+          <!-- Top Commands Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📊 Comandos Mais Utilizados</h3>
+            </div>
+            <div class="card-body">
+              <p class="card-description">Os 5 gatilhos de comando mais requisitados pelos usuários no chat.</p>
+              <div id="top-commands-list" class="top-list-container">
+                <!-- Loaded dynamically -->
+                <div class="no-data-placeholder">Nenhuma estatística de comandos registrada ainda.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DB Admin Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🧹 Limpeza de Banco de Dados</h3>
+            </div>
+            <div class="card-body">
+              <p class="card-description">
+                Essas ações limpam permanentemente o histórico local do bot guardado em banco de dados SQLite. Isso não afeta os chats no WhatsApp real.
+              </p>
+              <div class="warning-box">
+                <strong>Atenção:</strong> A limpeza de logs excluirá todos os históricos de mensagens recebidas/enviadas mostrados no console local e resetará os contadores.
+              </div>
+              <button class="btn btn-clear btn-block" id="btn-purge-logs" style="margin-top: 20px; padding: 12px 20px;">
+                <span>Limpar Histórico de Mensagens SQLite</span>
+              </button>
+              <div id="purge-feedback" class="feedback-message" style="margin-top: 10px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

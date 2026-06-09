@@ -1,0 +1,44 @@
+# OpenWA Test Bot - Docker Compose Configuration
+# Optimized for Coolify deployment (Traefik handled externally)
+
+services:
+  openwa-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openwa-bot
+    restart: unless-stopped
+    expose:
+      - '3000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/usr/src/app/data/bot.db
+    volumes:
+      - bot-data:/usr/src/app/data
+    networks:
+      - coolify
+    labels:
+      # --- Traefik (Coolify) routing ---
+      - 'traefik.enable=true'
+      # HTTP Router
+      - 'traefik.http.routers.openwa-bot.rule=Host(`${BOT_HOST:-bot.qwertyatlas.online}`)'
+      - 'traefik.http.routers.openwa-bot.entrypoints=http'
+      - 'traefik.http.routers.openwa-bot.service=openwa-bot'
+      # HTTPS Router
+      - 'traefik.http.routers.openwa-bot-secure.rule=Host(`${BOT_HOST:-bot.qwertyatlas.online}`)'
+      - 'traefik.http.routers.openwa-bot-secure.entrypoints=https'
+      - 'traefik.http.routers.openwa-bot-secure.tls=true'
+      - 'traefik.http.routers.openwa-bot-secure.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.openwa-bot-secure.service=openwa-bot'
+      # Service Port
+      - 'traefik.http.services.openwa-bot.loadbalancer.server.port=3000'
+      # Meta
+      - 'com.openwa.service=bot'
+
+volumes:
+  bot-data:
+    driver: local
+
+networks:
+  coolify:
+    external: true

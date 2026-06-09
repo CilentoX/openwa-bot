@@ -19,11 +19,11 @@ services:
       # --- Traefik (Coolify) routing ---
       - 'traefik.enable=true'
       # HTTP Router
-      - 'traefik.http.routers.openwa-bot.rule=Host(`${BOT_HOST:-bot.qwertyatlas.online}`)'
+      - 'traefik.http.routers.openwa-bot.rule=Host(`${BOT_HOST:-openwa-bot.qwertyatlas.online}`)'
       - 'traefik.http.routers.openwa-bot.entrypoints=http'
       - 'traefik.http.routers.openwa-bot.service=openwa-bot'
       # HTTPS Router
-      - 'traefik.http.routers.openwa-bot-secure.rule=Host(`${BOT_HOST:-bot.qwertyatlas.online}`)'
+      - 'traefik.http.routers.openwa-bot-secure.rule=Host(`${BOT_HOST:-openwa-bot.qwertyatlas.online}`)'
       - 'traefik.http.routers.openwa-bot-secure.entrypoints=https'
       - 'traefik.http.routers.openwa-bot-secure.tls=true'
       - 'traefik.http.routers.openwa-bot-secure.tls.certresolver=letsencrypt'

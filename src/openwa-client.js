@@ -24,9 +24,12 @@ async function openwaRequest(routePath, options = {}) {
 
   const apiKey = await getConfig('api_key');
   if (apiKey) {
-    headers['x-api-key'] = apiKey;
-    headers['X-API-Key'] = apiKey;
+    headers['x-api-key'] = apiKey.trim();
+    headers['X-API-Key'] = apiKey.trim();
   }
+
+  // Debug logging to help trace 401 credential issues
+  console.log(`📡 [Gateway Proxy] ${options.method || 'GET'} ${url} | Key: ${apiKey ? apiKey.substring(0, 12) + '...' : 'none'} (Length: ${apiKey ? apiKey.length : 0})`);
 
   const fetchOptions = { ...options, headers };
 

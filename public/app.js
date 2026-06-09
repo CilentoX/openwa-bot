@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let errMsg = 'Falha ao listar sessões.';
         try {
           const errData = await response.json();
-          errMsg = errData.details || errData.error || errMsg;
+          errMsg = errData.message || (errData.details && typeof errData.details === 'object' ? (errData.details.message || JSON.stringify(errData.details)) : errData.details) || errData.error || errMsg;
         } catch (_) {}
         throw new Error(errMsg);
       }

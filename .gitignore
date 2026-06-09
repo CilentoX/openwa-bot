@@ -2,6 +2,6 @@ node_modules/
 npm-debug.log
 bot.db
 bot.db-journal
-config.js
+/config.js
 .env
 .DS_Store

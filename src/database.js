@@ -82,8 +82,8 @@ async function initDb() {
   // Seed Config from config.js if it exists, otherwise use defaults
   const configJsPath = path.join(__dirname, '..', 'config.js');
   let defaultConfigs = {
-    openwa_url: 'https://openwa.qwertyatlas.online',
-    api_key: '',
+    openwa_url: process.env.OPENWA_API_URL || 'http://openwa-api:2785/api',
+    api_key: process.env.OPENWA_API_KEY || '',
     default_session_id: '',
     bot_name: 'OpenWA Bot',
     bot_port: '3000'

@@ -48,11 +48,17 @@ const start = async () => {
     // 4. Start HTTP Server
     await fastify.listen({ port, host: '0.0.0.0' });
 
+    // 5. Display startup info
+    const apiUrl = process.env.OPENWA_API_URL || await getConfig('openwa_url') || 'NOT SET';
+    const hasKey = !!(process.env.OPENWA_API_KEY || await getConfig('api_key'));
+    const connMode = process.env.OPENWA_API_URL ? 'DIRETO (Docker internal)' : 'CONFIG (SQLite)';
+
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`🟢 OpenWA Bot & Dashboard rodando em http://localhost:${port}`);
+    console.log(`📡 API OpenWA: ${apiUrl}`);
+    console.log(`🔗 Modo de conexão: ${connMode}`);
+    console.log(`🔑 API Key: ${hasKey ? 'Configurada ✓' : '⚠️  NÃO CONFIGURADA'}`);
     console.log(`💾 Persistência local: SQLite (bot.db)`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`Abra http://localhost:${port} no seu navegador`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   } catch (err) {
     fastify.log.error(err);
@@ -61,3 +67,4 @@ const start = async () => {
 };
 
 start();
+

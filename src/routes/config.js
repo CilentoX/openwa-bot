@@ -5,12 +5,18 @@ async function configRoutes(fastify, options) {
   fastify.get('/api/config', async (request, reply) => {
     try {
       const config = await getAllConfig();
+
+      // Show actual URL being used (env var takes priority)
+      const effectiveUrl = process.env.OPENWA_API_URL || config.openwa_url || '';
+      const connectionMode = process.env.OPENWA_API_URL ? 'direct' : 'config';
+
       return reply.send({
-        openwaUrl: config.openwa_url || '',
+        openwaUrl: effectiveUrl,
         apiKey: config.api_key || '',
         defaultSessionId: config.default_session_id || '',
         botName: config.bot_name || 'OpenWA Bot',
-        port: Number(config.bot_port) || 3000
+        port: Number(config.bot_port) || 3000,
+        connectionMode
       });
     } catch (err) {
       return reply.code(500).send({ error: 'Erro ao carregar configurações', details: err.message });

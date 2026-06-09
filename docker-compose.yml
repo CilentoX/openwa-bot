@@ -11,10 +11,15 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_PATH=/usr/src/app/data/bot.db
+      # Direct internal API URL (bypasses Traefik/nginx proxy)
+      - OPENWA_API_URL=http://openwa-api:2785/api
+      # API Key for authentication (set via Coolify env vars)
+      - OPENWA_API_KEY=${OPENWA_API_KEY:-}
     volumes:
       - bot-data:/usr/src/app/data
     networks:
       - coolify
+      - openwa-internal
     labels:
       # --- Traefik (Coolify) routing ---
       - 'traefik.enable=true'
@@ -40,3 +45,7 @@ volumes:
 networks:
   coolify:
     external: true
+  openwa-internal:
+    external: true
+    name: openwa-internal
+

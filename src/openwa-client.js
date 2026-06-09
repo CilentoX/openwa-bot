@@ -1,9 +1,27 @@
 const { getConfig } = require('./config-manager');
 
-/** Build the base API URL dynamically (always ends with /api) */
+/**
+ * Build the base API URL dynamically.
+ * Priority:
+ *   1. OPENWA_API_URL env var (Docker internal network - direct connection)
+ *   2. SQLite config 'openwa_url' (user-configured via dashboard)
+ *   3. Fallback default
+ *
+ * The returned URL always ends with /api
+ */
 async function getApiUrl() {
+  // Priority 1: Environment variable (Docker internal network)
+  if (process.env.OPENWA_API_URL) {
+    let url = process.env.OPENWA_API_URL.trim().replace(/\/$/, '');
+    if (!url.endsWith('/api')) {
+      url += '/api';
+    }
+    return url;
+  }
+
+  // Priority 2: SQLite config (user-configured)
   let openwaUrl = await getConfig('openwa_url');
-  let url = (openwaUrl || 'https://openwa.qwertyatlas.online').trim();
+  let url = (openwaUrl || 'http://openwa-api:2785').trim();
   url = url.replace(/\/$/, '');
   if (!url.endsWith('/api')) {
     url += '/api';
@@ -15,21 +33,24 @@ async function getApiUrl() {
 async function openwaRequest(routePath, options = {}) {
   const baseUrl = await getApiUrl();
   const url = `${baseUrl}/${routePath.replace(/^\//, '')}`;
-  
+
   const headers = {
     'Content-Type': 'application/json',
     'User-Agent': 'OpenWA-Bot/1.0.0',
     ...options.headers
   };
 
-  const apiKey = await getConfig('api_key');
+  // Get API key from env var or SQLite config
+  let apiKey = process.env.OPENWA_API_KEY || null;
+  if (!apiKey) {
+    apiKey = await getConfig('api_key');
+  }
+
   if (apiKey) {
-    headers['x-api-key'] = apiKey.trim();
     headers['X-API-Key'] = apiKey.trim();
   }
 
-  // Debug logging to help trace 401 credential issues
-  console.log(`📡 [Gateway Proxy] ${options.method || 'GET'} ${url} | Key: ${apiKey ? apiKey.substring(0, 12) + '...' : 'none'} (Length: ${apiKey ? apiKey.length : 0})`);
+  console.log(`📡 [OpenWA] ${options.method || 'GET'} ${url} | Key: ${apiKey ? apiKey.substring(0, 12) + '...' : 'NONE'}`);
 
   const fetchOptions = { ...options, headers };
 
@@ -46,10 +67,10 @@ async function openwaRequest(routePath, options = {}) {
       data = await response.json();
     } else {
       const text = await response.text();
-      try { 
-        data = JSON.parse(text); 
-      } catch (_) { 
-        data = { rawResponse: text }; 
+      try {
+        data = JSON.parse(text);
+      } catch (_) {
+        data = { rawResponse: text };
       }
     }
 
@@ -65,7 +86,7 @@ async function openwaRequest(routePath, options = {}) {
     if (error.status) throw error;
     const wrapped = new Error(`Conexão falhou: ${error.message}`);
     wrapped.status = 502;
-    wrapped.details = { originalError: error.message };
+    wrapped.details = { originalError: error.message, url };
     throw wrapped;
   }
 }

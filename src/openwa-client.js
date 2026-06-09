@@ -105,8 +105,40 @@ async function sendTextMessage(sessionId, chatId, text) {
   }
 }
 
+/** Ensure the internal webhook is registered for a given session */
+async function ensureWebhookRegistered(sessionId) {
+  if (!sessionId) return;
+
+  const targetUrl = process.env.BOT_WEBHOOK_URL || 'http://openwa-bot:3000/webhook';
+
+  try {
+    // 1. Get current webhooks for this session
+    const webhooks = await openwaRequest(`sessions/${sessionId}/webhooks`);
+    
+    // 2. Check if already exists and is active
+    const exists = Array.isArray(webhooks) && webhooks.some(w => w.url === targetUrl && w.active);
+    
+    if (!exists) {
+      console.log(`🔗 [Webhook] Registrar webhook automático: ${targetUrl} na sessão ${sessionId}...`);
+      await openwaRequest(`sessions/${sessionId}/webhooks`, {
+        method: 'POST',
+        body: JSON.stringify({
+          url: targetUrl,
+          events: ['message.received'],
+          retryCount: 3
+        })
+      });
+      console.log(`✅ [Webhook] Webhook registrado com sucesso!`);
+    }
+  } catch (error) {
+    console.error(`⚠️ [Webhook] Não foi possível verificar/registrar o webhook automático para a sessão ${sessionId}: ${error.message}`);
+  }
+}
+
 module.exports = {
   getApiUrl,
   openwaRequest,
-  sendTextMessage
+  sendTextMessage,
+  ensureWebhookRegistered
 };
+

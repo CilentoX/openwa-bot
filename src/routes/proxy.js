@@ -49,7 +49,11 @@ async function proxyRoutes(fastify, options) {
   });
 
   fastify.get('/api/sessions/:id', async (req, reply) => {
-    try { return reply.send(await openwaRequest(`sessions/${req.params.id}`)); }
+    try {
+      const { ensureWebhookRegistered } = require('../openwa-client');
+      ensureWebhookRegistered(req.params.id).catch(() => {});
+      return reply.send(await openwaRequest(`sessions/${req.params.id}`));
+    }
     catch (e) { return sendError(reply, e, `Erro ao buscar sessão ${req.params.id}`); }
   });
 

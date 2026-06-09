@@ -48,7 +48,15 @@ const start = async () => {
     // 4. Start HTTP Server
     await fastify.listen({ port, host: '0.0.0.0' });
 
-    // 5. Display startup info
+    // 5. Auto-register webhook for default session if configured
+    const defaultSession = await getConfig('default_session_id');
+    if (defaultSession) {
+      const { ensureWebhookRegistered } = require('./src/openwa-client');
+      console.log(`📡 [Webhook] Verificando webhook automático para a sessão padrão: ${defaultSession}`);
+      ensureWebhookRegistered(defaultSession).catch(() => {});
+    }
+
+    // 6. Display startup info
     const apiUrl = process.env.OPENWA_API_URL || await getConfig('openwa_url') || 'NOT SET';
     const hasKey = !!(process.env.OPENWA_API_KEY || await getConfig('api_key'));
     const connMode = process.env.OPENWA_API_URL ? 'DIRETO (Docker internal)' : 'CONFIG (SQLite)';

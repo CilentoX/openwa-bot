@@ -26,9 +26,8 @@ async function configRoutes(fastify, options) {
   // PUT /api/config
   fastify.put('/api/config', async (request, reply) => {
     try {
-      const { openwaUrl, apiKey, defaultSessionId, botName, port } = request.body;
+      const { apiKey, defaultSessionId, botName, port } = request.body;
 
-      if (openwaUrl !== undefined) await setConfig('openwa_url', openwaUrl);
       if (apiKey !== undefined) await setConfig('api_key', apiKey);
       if (defaultSessionId !== undefined) await setConfig('default_session_id', defaultSessionId);
       if (botName !== undefined) await setConfig('bot_name', botName);

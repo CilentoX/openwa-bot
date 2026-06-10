@@ -66,17 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // === 1. CONFIGURATION TAB ===
   const configForm = document.getElementById('config-form');
-  const configOpenwaUrl = document.getElementById('config-openwa-url');
   const configApiKey = document.getElementById('config-api-key');
   const configDefaultSession = document.getElementById('config-default-session');
   const configBotName = document.getElementById('config-bot-name');
   const configBotPort = document.getElementById('config-bot-port');
   const configFeedback = document.getElementById('config-feedback');
   const toggleApiKeyVisibility = document.getElementById('toggle-api-key-visibility');
-  const connectionDot = document.getElementById('connection-dot');
-  const connectionText = document.getElementById('connection-text');
-  const statusUrlDisplay = document.getElementById('status-url-display');
-  const statusHealthDisplay = document.getElementById('status-health-display');
   const statusSessionsCount = document.getElementById('status-sessions-count');
   const btnTestConnection = document.getElementById('btn-test-connection');
   const appTitleName = document.getElementById('app-title-name');
@@ -97,14 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Não foi possível ler as configurações.');
       const data = await response.json();
 
-      configOpenwaUrl.value = data.openwaUrl || '';
       configApiKey.value = data.apiKey || '';
       configDefaultSession.value = data.defaultSessionId || '';
       configBotName.value = data.botName || '';
       configBotPort.value = data.port || 3000;
 
       // Update UI displays
-      statusUrlDisplay.textContent = data.openwaUrl || 'Não configurada';
       if (data.botName) {
         appTitleName.innerHTML = `${escapeHtml(data.botName)} <span class="accent-text">Console</span>`;
       }
@@ -122,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            openwaUrl: configOpenwaUrl.value.trim(),
             apiKey: configApiKey.value.trim(),
             defaultSessionId: configDefaultSession.value.trim(),
             botName: configBotName.value.trim(),
@@ -145,6 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Test OpenWA integration
   async function testIntegration() {
+    const connectionDot = document.getElementById('connection-dot');
+    const connectionText = document.getElementById('connection-text');
+    const statusHealthDisplay = document.getElementById('status-health-display');
+
     if (connectionDot) {
       connectionDot.className = 'status-dot checking';
       connectionText.textContent = 'Verificando...';
@@ -156,8 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!healthRes.ok) throw new Error('Gateway Offline');
       const healthData = await healthRes.json();
 
-      statusHealthDisplay.textContent = healthData.status || 'OK';
-      statusHealthDisplay.className = 'text-green';
+      if (statusHealthDisplay) {
+        statusHealthDisplay.textContent = healthData.status || 'OK';
+        statusHealthDisplay.className = 'text-green';
+      }
 
       // 2. Fetch sessions proxy call
       const sessionsRes = await fetch('/api/sessions');
@@ -173,8 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
         connectionText.textContent = 'Online';
       }
     } catch (err) {
-      statusHealthDisplay.textContent = 'Desconectado';
-      statusHealthDisplay.className = 'text-red';
+      if (statusHealthDisplay) {
+        statusHealthDisplay.textContent = 'Desconectado';
+        statusHealthDisplay.className = 'text-red';
+      }
       statusSessionsCount.textContent = '-';
       if (connectionDot) {
         connectionDot.className = 'status-dot offline';

@@ -56,23 +56,16 @@
             </div>
             <div class="card-body">
               <p class="card-description">
-                Configure as credenciais e parâmetros de conexão com o OpenWA Gateway. Essas configurações são salvas diretamente no banco de dados SQLite local.
+                Configure as credenciais e parâmetros do Bot. A conexão com o OpenWA Gateway é feita automaticamente via rede interna Docker. Essas configurações são salvas no banco de dados SQLite local.
               </p>
               <form id="config-form" class="dashboard-form">
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label for="config-openwa-url">URL do OpenWA Gateway</label>
-                    <input type="url" id="config-openwa-url" placeholder="https://openwa.qwertyatlas.online/api" required>
-                    <small class="input-tip">A URL base da API do gateway OpenWA (será adicionado /api automaticamente se necessário).</small>
+                <div class="form-group">
+                  <label for="config-api-key">Chave de API (x-api-key)</label>
+                  <div class="password-wrapper">
+                    <input type="password" id="config-api-key" autocomplete="new-password" placeholder="Digite sua chave de API master...">
+                    <button type="button" class="btn-toggle-password" id="toggle-api-key-visibility">👁️</button>
                   </div>
-                  <div class="form-group">
-                    <label for="config-api-key">Chave de API (x-api-key)</label>
-                    <div class="password-wrapper">
-                      <input type="password" id="config-api-key" autocomplete="new-password" placeholder="Digite sua chave de API master...">
-                      <button type="button" class="btn-toggle-password" id="toggle-api-key-visibility">👁️</button>
-                    </div>
-                    <small class="input-tip">Chave de autenticação configurada na sua instância em nuvem do OpenWA.</small>
-                  </div>
+                  <small class="input-tip">Chave de autenticação configurada na sua instância do OpenWA.</small>
                 </div>
 
                 <div class="form-grid-3">
@@ -114,7 +107,7 @@
                 <span class="status-text-large" id="connection-text">Desconectado</span>
               </div>
               <div class="status-details">
-                <p><strong>URL Gateway:</strong> <span id="status-url-display">-</span></p>
+                <p><strong>Conexão:</strong> <span class="info-label">Docker Internal (automática)</span></p>
                 <p><strong>Health Check:</strong> <span id="status-health-display">-</span></p>
                 <p><strong>Sessões Ativas:</strong> <span id="status-sessions-count">-</span></p>
               </div>

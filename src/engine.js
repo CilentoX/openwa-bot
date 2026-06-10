@@ -22,42 +22,55 @@ async function addMessageLog(direction, chatId, body, command = null) {
 
 /** Process incoming webhook messages */
 async function processIncomingMessage(payload) {
+  // Step 1: Validate event
   if (!payload || payload.event !== 'message.received' || !payload.data) {
+    console.log(`🔕 [Engine] Evento ignorado: "${payload?.event || 'nenhum'}" (esperado: "message.received")`);
     return { status: 'ignored_event' };
   }
 
   const msg = payload.data;
 
-  // Ignore messages sent by ourselves to prevent loops
+  // Step 2: Ignore self-messages
   if (msg.fromMe) {
+    console.log(`🔕 [Engine] Mensagem ignorada (fromMe=true)`);
     return { status: 'ignored_from_me' };
   }
 
   const chatId = msg.from;
   const text = (msg.body || '').trim();
   
+  // Step 3: Get session ID
   const db = getDb();
   const defaultSessionId = await getConfig('default_session_id');
   const sessionId = payload.sessionId || defaultSessionId;
 
+  console.log(`📋 [Engine] Processando mensagem:`);
+  console.log(`   chatId: ${chatId}`);
+  console.log(`   text: "${text}"`);
+  console.log(`   payload.sessionId: "${payload.sessionId || 'VAZIO'}"`);
+  console.log(`   defaultSessionId (config): "${defaultSessionId || 'VAZIO'}"`);
+  console.log(`   sessionId efetivo: "${sessionId || 'NENHUM'}"`);
+
   if (!sessionId) {
-    console.warn('⚠️ Nenhuma sessão configurada para responder à mensagem.');
+    console.warn('⚠️ [Engine] Nenhuma sessão configurada para responder à mensagem.');
+    console.warn('   → Configure "default_session_id" no painel do bot ou envie o sessionId no payload do webhook.');
     return { status: 'no_session_configured' };
   }
 
-  console.log(`💬 Mensagem de ${chatId} na sessão ${sessionId}: "${text}"`);
-
-  // 1. Log incoming message
+  // Step 4: Log incoming message
   await addMessageLog('incoming', chatId, text);
 
   let replyText = null;
   let matchedTrigger = null;
 
-  // 2. Check commands (enabled = 1)
+  // Step 5: Check commands (enabled = 1)
   const commands = await db.all('SELECT trigger, response, type FROM commands WHERE enabled = 1');
+  console.log(`🤖 [Engine] Comandos habilitados: ${commands.length}`);
+  
   const matchedCommand = commands.find(c => c.trigger.toLowerCase() === text.toLowerCase());
 
   if (matchedCommand) {
+    console.log(`✅ [Engine] Comando encontrado! Trigger: "${matchedCommand.trigger}" | Type: ${matchedCommand.type}`);
     matchedTrigger = matchedCommand.trigger;
     if (matchedCommand.type === 'dynamic') {
       if (matchedCommand.trigger === '!hora') {
@@ -68,11 +81,17 @@ async function processIncomingMessage(payload) {
     } else {
       replyText = matchedCommand.response;
     }
+  } else {
+    console.log(`❌ [Engine] Nenhum comando encontrado para: "${text}"`);
+    if (commands.length > 0) {
+      console.log(`   Triggers disponíveis: ${commands.map(c => `"${c.trigger}"`).join(', ')}`);
+    }
   }
 
-  // 3. Check Q&A if no command matched (enabled = 1, ordered by priority DESC)
+  // Step 6: Check Q&A if no command matched
   if (!replyText) {
     const qnas = await db.all('SELECT question, answer, match_type, priority FROM qna WHERE enabled = 1 ORDER BY priority DESC, id ASC');
+    console.log(`💬 [Engine] Regras Q&A habilitadas: ${qnas.length}`);
     
     for (const qna of qnas) {
       let isMatch = false;
@@ -88,30 +107,41 @@ async function processIncomingMessage(payload) {
           const regex = new RegExp(qna.question, 'i');
           isMatch = regex.test(text);
         } catch (err) {
-          console.error(`❌ Regex inválido no Q&A ID: ${qna.id}: ${err.message}`);
+          console.error(`❌ Regex inválido no Q&A: "${qna.question}": ${err.message}`);
         }
       }
 
       if (isMatch) {
+        console.log(`✅ [Engine] Q&A match! Pergunta: "${qna.question}" (${qna.match_type})`);
         replyText = qna.answer;
         matchedTrigger = `qna:${qna.question}`;
-        break; // Match found, stop evaluating lower priority Q&A
+        break;
       }
+    }
+
+    if (!replyText) {
+      console.log(`❌ [Engine] Nenhuma regra Q&A encontrada para: "${text}"`);
     }
   }
 
-  // 4. Send response if generated
+  // Step 7: Send response if generated
   if (replyText) {
-    console.log(`🤖 Respondendo a ${chatId} com: "${replyText}"`);
+    console.log(`🤖 [Engine] Respondendo a ${chatId} (sessão: ${sessionId}):`);
+    console.log(`   Resposta: "${replyText.substring(0, 100)}${replyText.length > 100 ? '...' : ''}"`);
+    
     const result = await sendTextMessage(sessionId, chatId, replyText);
+    
     if (result.success) {
+      console.log(`✅ [Engine] Mensagem enviada com sucesso!`);
       await addMessageLog('outgoing', chatId, replyText, matchedTrigger);
       return { status: 'replied', trigger: matchedTrigger };
     } else {
+      console.error(`❌ [Engine] Falha ao enviar: ${result.error}`);
       return { status: 'error_sending', error: result.error };
     }
   }
 
+  console.log(`🔕 [Engine] Nenhuma resposta gerada para: "${text}"`);
   return { status: 'no_match' };
 }
 

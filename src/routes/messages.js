@@ -49,6 +49,59 @@ async function messagesRoutes(fastify, options) {
       return reply.code(500).send({ error: 'Erro ao carregar estatísticas', details: err.message });
     }
   });
+
+  // GET /api/messages/stream (SSE)
+  fastify.get('/api/messages/stream', (request, reply) => {
+    const messageEmitter = require('../events');
+    
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    reply.raw.write('comment: connected\n\n');
+
+    const onMessage = (data) => {
+      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    messageEmitter.on('message', onMessage);
+
+    request.raw.on('close', () => {
+      messageEmitter.off('message', onMessage);
+    });
+  });
+
+  // GET /api/bot-stats/history
+  fastify.get('/api/bot-stats/history', async (request, reply) => {
+    try {
+      const historyRows = await db.all(`
+        SELECT 
+          strftime('%d/%m %H:00', timestamp / 1000, 'unixepoch', 'localtime') as period,
+          direction,
+          COUNT(*) as count
+        FROM message_logs
+        WHERE timestamp > ?
+        GROUP BY period, direction
+        ORDER BY timestamp ASC
+      `, [Date.now() - 24 * 60 * 60 * 1000]);
+
+      const directionRows = await db.all(`
+        SELECT direction, COUNT(*) as count
+        FROM message_logs
+        GROUP BY direction
+      `);
+
+      return reply.send({
+        history: historyRows || [],
+        directionStats: directionRows || []
+      });
+    } catch (err) {
+      return reply.code(500).send({ error: 'Erro ao buscar histórico de estatísticas', details: err.message });
+    }
+  });
 }
 
 module.exports = messagesRoutes;

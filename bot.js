@@ -39,6 +39,7 @@ const start = async () => {
     await fastify.register(require('./src/routes/commands'));
     await fastify.register(require('./src/routes/qna'));
     await fastify.register(require('./src/routes/messages'));
+    await fastify.register(require('./src/routes/menus'));
     await fastify.register(require('./src/routes/proxy'));
 
     // 3. Retrieve server port from DB config
@@ -59,7 +60,7 @@ const start = async () => {
     // 6. Display startup info
     const apiUrl = process.env.OPENWA_API_URL || await getConfig('openwa_url') || 'NOT SET';
     const hasKey = !!(process.env.OPENWA_API_KEY || await getConfig('api_key'));
-    const connMode = process.env.OPENWA_API_URL ? 'DIRETO (Docker internal)' : 'CONFIG (SQLite)';
+    const connMode = process.env.OPENWA_API_URL ? 'ENV (Variável de Ambiente)' : 'CONFIG (SQLite)';
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`🟢 OpenWA Bot & Dashboard rodando em http://localhost:${port}`);

@@ -75,6 +75,29 @@ async function initDb() {
     )
   `);
 
+  // 6. Interactive Menus (URA) Table
+  await dbInstance.exec(`
+    CREATE TABLE IF NOT EXISTS bot_menus (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      message_text TEXT,
+      parent_id INTEGER,
+      trigger_option TEXT,
+      is_leaf INTEGER DEFAULT 0,
+      enabled INTEGER DEFAULT 1,
+      created_at INTEGER
+    )
+  `);
+
+  // 7. Customer States Table
+  await dbInstance.exec(`
+    CREATE TABLE IF NOT EXISTS customer_states (
+      chat_id TEXT PRIMARY KEY,
+      current_menu_id INTEGER,
+      updated_at INTEGER
+    )
+  `);
+
   // Seed default stats
   await dbInstance.run('INSERT OR IGNORE INTO stats (key, value) VALUES ("received", 0)');
   await dbInstance.run('INSERT OR IGNORE INTO stats (key, value) VALUES ("sent", 0)');
@@ -82,7 +105,7 @@ async function initDb() {
   // Seed Config from config.js if it exists, otherwise use defaults
   const configJsPath = path.join(__dirname, '..', 'config.js');
   let defaultConfigs = {
-    openwa_url: process.env.OPENWA_API_URL || 'http://openwa-api:2785/api',
+    openwa_url: process.env.OPENWA_API_URL || 'https://openwa.qwertyatlas.online/api',
     api_key: process.env.OPENWA_API_KEY || '',
     default_session_id: '',
     bot_name: 'OpenWA Bot',
@@ -203,6 +226,110 @@ async function initDb() {
         [qna.question, qna.answer, qna.match_type, qna.priority, now]
       );
     }
+  }
+
+  // Seed initial interactive menus (URA)
+  const menuCount = await dbInstance.get('SELECT COUNT(*) as count FROM bot_menus');
+  if (menuCount.count === 0) {
+    const rootMenuId = await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, NULL, ?, 0, 1, ?)',
+      [
+        'Menu Principal',
+        '🤖 Olá! Seja bem-vindo ao menu de autoatendimento.\nPor favor, escolha uma das opções abaixo digitando o número correspondente:\n\n1️⃣ - Suporte Técnico\n2️⃣ - Setor Financeiro\n3️⃣ - Informações / Dúvidas',
+        '!menu',
+        now
+      ]
+    );
+
+    const mainId = rootMenuId.lastID;
+
+    // Submenu 1: Suporte Técnico
+    const supportMenuId = await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 0, 1, ?)',
+      [
+        'Suporte Técnico',
+        '🛠️ *Suporte Técnico*\nComo podemos te ajudar no suporte técnico?\n\n1️⃣1️⃣ - Problema com Conexão\n1️⃣2️⃣ - Outros Assuntos\n\n0️⃣ - Voltar ao Menu Principal',
+        mainId,
+        '1',
+        now
+      ]
+    );
+
+    const supportId = supportMenuId.lastID;
+
+    // Submenu 2: Financeiro
+    const financeMenuId = await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 0, 1, ?)',
+      [
+        'Setor Financeiro',
+        '💵 *Setor Financeiro*\nSelecione o serviço financeiro desejado:\n\n2️⃣1️⃣ - Segunda Via de Boleto\n2️⃣2️⃣ - Falar com Cobrança\n\n0️⃣ - Voltar ao Menu Principal',
+        mainId,
+        '2',
+        now
+      ]
+    );
+
+    const financeId = financeMenuId.lastID;
+
+    // Submenu 3: Informações (Leaf Node)
+    await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)',
+      [
+        'Informações / Dúvidas',
+        'ℹ️ *Informações / Dúvidas*\nNossa empresa funciona de Segunda a Sexta, das 9h às 18h.\nPara mais detalhes, visite nosso site em https://openwa.qwertyatlas.online\n\n_Sua sessão de atendimento foi finalizada. Digite !menu a qualquer momento para reabrir._',
+        mainId,
+        '3',
+        now
+      ]
+    );
+
+    // Support Leaf 1
+    await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)',
+      [
+        'Problema com Conexão',
+        '🔌 *Problema com Conexão*\nTente reiniciar seu roteador por 30 segundos. Caso o problema persista, um técnico entrará em contato em instantes.\n\n_Sessão encerrada._',
+        supportId,
+        '11',
+        now
+      ]
+    );
+
+    // Support Leaf 2
+    await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)',
+      [
+        'Suporte - Outros',
+        '🧑‍💻 *Outros Assuntos*\nPor favor, descreva seu problema em uma única mensagem para que nossa equipe possa analisar.\n\n_Sessão encerrada._',
+        supportId,
+        '12',
+        now
+      ]
+    );
+
+    // Finance Leaf 1
+    await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)',
+      [
+        'Segunda Via de Boleto',
+        '📄 *Segunda Via de Boleto*\nPara obter a segunda via de seu boleto, acesse nosso portal do cliente e digite seu CPF.\n\n_Sessão encerrada._',
+        financeId,
+        '21',
+        now
+      ]
+    );
+
+    // Finance Leaf 2
+    await dbInstance.run(
+      'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)',
+      [
+        'Falar com Cobrança',
+        '📞 *Cobrança*\nTransferindo para o setor de cobrança. Aguarde um momento...\n\n_Sessão encerrada._',
+        financeId,
+        '22',
+        now
+      ]
+    );
   }
 
   console.log('💾 Banco de dados SQLite inicializado e populado (bot.db).');

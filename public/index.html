@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Style Link -->
   <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -39,6 +41,7 @@
       <button class="tab-button active" data-tab="config">⚙️ Configuração</button>
       <button class="tab-button" data-tab="commands">🤖 Comandos</button>
       <button class="tab-button" data-tab="qna">💬 Q&A (Auto-Respostas)</button>
+      <button class="tab-button" data-tab="menus">🌳 URA / Menus</button>
       <button class="tab-button" data-tab="monitor">📡 Monitor (Chat/Sessões)</button>
       <button class="tab-button" data-tab="stats">📊 Estatísticas</button>
     </nav>
@@ -128,6 +131,15 @@
               <h3 id="command-form-title">🤖 Criar Novo Comando</h3>
             </div>
             <div class="card-body">
+              <div class="templates-section">
+                <span class="templates-label">💡 Modelos Rápidos de Comando</span>
+                <div class="templates-list">
+                  <button type="button" class="btn-template" data-template="ping">🏓 !ping</button>
+                  <button type="button" class="btn-template" data-template="help">📋 !help</button>
+                  <button type="button" class="btn-template" data-template="hora">🕒 !hora</button>
+                  <button type="button" class="btn-template" data-template="menu">📱 !menu</button>
+                </div>
+              </div>
               <form id="command-form" class="dashboard-form">
                 <input type="hidden" id="command-id">
                 
@@ -210,6 +222,15 @@
               <h3 id="qna-form-title">💬 Nova Regra de Auto-Resposta (Q&A)</h3>
             </div>
             <div class="card-body">
+              <div class="templates-section">
+                <span class="templates-label">💡 Modelos Rápidos de Q&A</span>
+                <div class="templates-list">
+                  <button type="button" class="btn-qna-template" data-template="oi">👋 Boas-vindas ("oi")</button>
+                  <button type="button" class="btn-qna-template" data-template="preco">💰 Preço/Valor</button>
+                  <button type="button" class="btn-qna-template" data-template="horario">🕒 Horário</button>
+                  <button type="button" class="btn-qna-template" data-template="atendente">👤 Atendente</button>
+                </div>
+              </div>
               <form id="qna-form" class="dashboard-form">
                 <input type="hidden" id="qna-id">
 
@@ -284,11 +305,103 @@
         </div>
       </div>
 
+      <!-- ==================== TAB: URA MENUS ==================== -->
+      <div class="tab-pane" id="tab-menus">
+        <div class="two-col-grid">
+          <!-- Menu Editor Form (Left) -->
+          <div class="card">
+            <div class="card-header">
+              <h3 id="menu-form-title">🌳 Criar Novo Menu / Submenu</h3>
+            </div>
+            <div class="card-body">
+              <form id="menu-form" class="dashboard-form">
+                <input type="hidden" id="menu-id">
+                
+                <div class="form-group">
+                  <label for="menu-name">Nome do Menu</label>
+                  <input type="text" id="menu-name" placeholder="Ex: Menu Principal ou Suporte Técnico" required>
+                  <small class="input-tip">Nome interno para identificação do nó.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="menu-parent-id">Menu Pai (Submenu de)</label>
+                  <select id="menu-parent-id" class="dashboard-select">
+                    <option value="">[Nenhum - Root Menu]</option>
+                  </select>
+                  <small class="input-tip">Selecione o menu pai se esta for uma subopção.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="menu-trigger-option">Opção de Disparo (Trigger)</label>
+                  <input type="text" id="menu-trigger-option" placeholder="Ex: !menu ou 1 ou 2" required>
+                  <small class="input-tip">O que o cliente digita para acionar este menu (ex: '1' dentro do menu pai).</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="menu-message-text">Mensagem de Resposta</label>
+                  <textarea id="menu-message-text" rows="6" placeholder="Digite o texto que o bot enviará..." required></textarea>
+                  <small class="input-tip">Suporta quebras de linha e emojis do WhatsApp.</small>
+                </div>
+
+                <div class="form-grid-2" style="margin-bottom: 16px;">
+                  <div class="form-group row-checkbox" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="menu-is-leaf">
+                    <label for="menu-is-leaf" style="margin-bottom: 0;">Finalizar conversa (Leaf)</label>
+                  </div>
+                  <div class="form-group row-checkbox" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="menu-enabled" checked>
+                    <label for="menu-enabled" style="margin-bottom: 0;">Menu Habilitado</label>
+                  </div>
+                </div>
+
+                <div class="form-actions-flex">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-menu" style="display: none;">Cancelar</button>
+                  <button type="submit" class="btn btn-accent" id="btn-save-menu">Salvar Menu</button>
+                </div>
+              </form>
+              <div id="menu-feedback" class="feedback-message"></div>
+            </div>
+          </div>
+
+          <!-- Menu Tree (Right) -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🌳 Estrutura da URA (Árvore de Decisão)</h3>
+            </div>
+            <div class="card-body">
+              <div class="menu-tree-container" id="menu-tree-container">
+                <!-- Dynamically loaded decision tree -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== TAB 4: MONITOR ==================== -->
       <div class="tab-pane" id="tab-monitor">
         <div class="dashboard-grid">
           <!-- COLUMN 1: SESSIONS & GROUPS -->
           <section class="grid-col left-column">
+            <!-- Create Session Card -->
+            <div class="card create-session-card">
+              <div class="card-header">
+                <h3>➕ Criar Nova Sessão</h3>
+              </div>
+              <div class="card-body">
+                <form id="create-session-form" class="dashboard-form">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <div style="display: flex; gap: 8px;">
+                      <input type="text" id="new-session-name" placeholder="Nome da sessão (ex: lucas-bot)" required style="padding: 8px 12px; font-size: 0.85rem;">
+                      <button type="submit" class="btn btn-accent btn-small" style="padding: 8px 16px; font-size: 0.85rem; white-space: nowrap;">
+                        <span>Criar</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                <div id="create-session-feedback" class="feedback-message" style="margin-top: 8px;"></div>
+              </div>
+            </div>
+
             <!-- Session Info Card -->
             <div class="card status-details-card">
               <div class="card-header">
@@ -315,6 +428,45 @@
                   <span class="info-label">Conectado em:</span>
                   <span class="info-value" id="info-session-connected-at">-</span>
                 </div>
+                
+                <!-- Session Actions Panel -->
+                <div class="session-actions-panel" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-session-set-default" style="border-color: var(--color-blue); color: var(--color-blue); font-size: 0.8rem; padding: 6px 12px;">
+                    ⭐ Definir como Padrão do Bot
+                  </button>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-primary" id="btn-session-start" style="flex: 1; font-size: 0.8rem; padding: 6px 12px; background: linear-gradient(135deg, var(--color-green) 0%, #059669 100%);">
+                      ▶️ Iniciar
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-session-stop" style="flex: 1; font-size: 0.8rem; padding: 6px 12px; border-color: var(--color-warning); color: var(--color-warning);">
+                      ⏸️ Parar
+                    </button>
+                  </div>
+                  <button type="button" class="btn btn-clear btn-block" id="btn-session-delete" style="font-size: 0.8rem; padding: 6px 12px; display: flex; justify-content: center; gap: 8px;">
+                    🗑️ Excluir Sessão
+                  </button>
+                </div>
+                <div id="session-action-feedback" class="feedback-message" style="margin-top: 8px;"></div>
+              </div>
+            </div>
+
+            <!-- QR Code Card (Visible only when session status is qr_ready) -->
+            <div class="card qr-code-card" id="qr-code-card" style="display: none;">
+              <div class="card-header">
+                <h3>📷 Escanear QR Code</h3>
+              </div>
+              <div class="card-body status-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <p class="card-description" style="text-align: center; font-size: 0.75rem; margin-bottom: 12px;">
+                  Abra o WhatsApp no celular, vá em Aparelhos Conectados e escaneie o código abaixo:
+                </p>
+                <div id="qr-code-container" class="qr-container" style="background: white; padding: 12px; border-radius: 8px; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; min-height: 180px; min-width: 180px;">
+                  <div class="qr-spinner" style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">
+                    <span class="spinner"></span> Carregando QR...
+                  </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-block" id="btn-refresh-qr" style="margin-top: 12px; font-size: 0.8rem; padding: 6px 12px;">
+                  🔄 Atualizar QR Code
+                </button>
               </div>
             </div>
 
@@ -336,23 +488,61 @@
             </div>
           </section>
 
-          <!-- COLUMN 2: LIVE FEED -->
+          <!-- COLUMN 2: LIVE CHAT & FEED -->
           <section class="grid-col feed-column">
             <div class="card chat-feed-card">
               <div class="card-header">
                 <div class="header-with-actions">
-                  <h3>💬 Monitor de Mensagens (Local)</h3>
+                  <h3>💬 Monitor de Chat (Tempo Real)</h3>
                   <div class="header-buttons">
                     <button class="btn btn-small btn-clear" id="btn-clear-feed">Limpar Feed</button>
                   </div>
                 </div>
               </div>
-              <div class="card-body messages-container" id="messages-feed">
-                <!-- Messages will be injected here -->
-                <div class="no-messages-placeholder">
-                  <div class="placeholder-icon">📡</div>
-                  <p>Nenhuma mensagem recebida ou enviada ainda.</p>
-                  <p class="placeholder-sub">Aguardando eventos do webhook do OpenWA...</p>
+              
+              <!-- Chat Split Panel -->
+              <div class="chat-split-container">
+                <!-- Left Sidebar: Conversations -->
+                <div class="chat-sidebar">
+                  <div class="chat-sidebar-header">
+                    <h4>Chats Recentes</h4>
+                  </div>
+                  <div class="chat-list" id="chat-list-container">
+                    <!-- Loaded dynamically -->
+                    <div class="no-chats-placeholder" style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem;">
+                      Sem conversas ativas.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Screen: Active conversation messages -->
+                <div class="chat-screen" id="active-chat-screen">
+                  <!-- Active conversation header -->
+                  <div class="chat-screen-header" id="chat-screen-header" style="display: none;">
+                    <div class="chat-header-avatar">👤</div>
+                    <div class="chat-header-info">
+                      <h4 id="chat-header-title">-</h4>
+                      <span class="chat-header-subtitle">Chat Ativo</span>
+                    </div>
+                  </div>
+
+                  <!-- Messages container wrapper -->
+                  <div class="messages-feed-wrapper" id="messages-feed">
+                    <div class="no-messages-placeholder">
+                      <div class="placeholder-icon">💬</div>
+                      <p>Selecione um contato ou grupo na barra lateral para visualizar a conversa em tempo real.</p>
+                    </div>
+                  </div>
+
+                  <!-- Quick Reply Input Bar -->
+                  <div class="chat-reply-bar" id="chat-reply-bar" style="display: none;">
+                    <form id="chat-reply-form" class="reply-form">
+                      <input type="text" id="chat-reply-input" placeholder="Digite uma mensagem rápida..." required>
+                      <button type="submit" class="btn btn-accent btn-small">
+                        <span>Enviar</span>
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -398,8 +588,51 @@
                     <small class="input-tip">Grupos terminam com @g.us, contatos com @c.us</small>
                   </div>
                   <div class="form-group">
+                    <label for="send-msg-type">Tipo de Mensagem</label>
+                    <select id="send-msg-type" class="dashboard-select">
+                      <option value="text">📝 Texto</option>
+                      <option value="image">🖼️ Imagem</option>
+                      <option value="audio">🎙️ Áudio (Mensagem de Voz)</option>
+                      <option value="video">🎥 Vídeo</option>
+                      <option value="document">📄 Documento (PDF, etc.)</option>
+                      <option value="sticker">✨ Figurinha (Sticker)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="send-text-group">
                     <label for="send-text">Mensagem</label>
                     <textarea id="send-text" rows="4" placeholder="Digite sua mensagem de teste..." required></textarea>
+                  </div>
+                  
+                  <!-- Media Upload Drop Zone -->
+                  <div class="form-group" id="send-media-group" style="display: none;">
+                    <label>Selecionar Arquivo</label>
+                    <div class="file-drop-zone" id="file-drop-zone">
+                      <div class="drop-zone-content">
+                        <span class="drop-zone-icon">📁</span>
+                        <p class="drop-zone-text">Arraste um arquivo aqui ou clique para selecionar</p>
+                        <span class="drop-zone-info" id="file-type-info">Selecione uma imagem, áudio, vídeo ou documento</span>
+                      </div>
+                      <input type="file" id="media-file-input" style="display: none;">
+                    </div>
+                    
+                    <!-- File Preview Box -->
+                    <div class="file-preview-box" id="file-preview-box" style="display: none;">
+                      <div class="preview-header">
+                        <span class="preview-filename" id="preview-filename">nome-do-arquivo.jpg</span>
+                        <button type="button" class="btn-remove-file" id="btn-remove-file">❌</button>
+                      </div>
+                      <div class="preview-content" id="preview-content"></div>
+                    </div>
+                  </div>
+
+                  <div class="form-group" id="send-caption-group" style="display: none;">
+                    <label for="send-caption">Legenda / Texto Adicional (Opcional)</label>
+                    <input type="text" id="send-caption" placeholder="Ex: Veja este arquivo...">
+                  </div>
+
+                  <div class="form-group" id="send-filename-group" style="display: none;">
+                    <label for="send-filename">Nome do Arquivo (Exibição no chat)</label>
+                    <input type="text" id="send-filename" placeholder="Ex: boleto.pdf">
                   </div>
                   <button type="submit" class="btn btn-accent btn-block" id="btn-send-message">
                     <span>Enviar via OpenWA</span>
@@ -432,6 +665,28 @@
             <div class="stat-card-title">💬 Histórico Total</div>
             <div class="stat-card-value" id="stats-total-big">0</div>
             <div class="stat-card-desc">Linhas registradas no SQLite</div>
+          </div>
+        </div>
+
+        <!-- Charts Grid Row -->
+        <div class="charts-grid-row" style="margin-top: 24px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <!-- Message volume timeline chart -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>📈 Fluxo de Mensagens (Últimas 24h)</h3>
+            </div>
+            <div class="card-body" style="height: 320px; position: relative;">
+              <canvas id="messagesHistoryChart"></canvas>
+            </div>
+          </div>
+          <!-- Doughnut type/direction chart -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>📊 Distribuição de Mensagens</h3>
+            </div>
+            <div class="card-body" style="height: 320px; position: relative; display: flex; align-items: center; justify-content: center; padding: 20px;">
+              <canvas id="messagesDirectionChart"></canvas>
+            </div>
           </div>
         </div>
 

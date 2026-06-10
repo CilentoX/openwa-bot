@@ -9,10 +9,10 @@ Bot de teste e dashboard web para a **API Gateway do OpenWA**. Utiliza **Fastify
 ```
 Internet → Traefik → openwa-bot (porta 3000, rede coolify)
                          ↓
-                    openwa-api (porta 2785, rede openwa-internal)
+             https://openwa.qwertyatlas.online/api
 ```
 
-O bot conecta **diretamente** na API do OpenWA via rede Docker interna (`openwa-internal`), sem passar pelo proxy nginx do dashboard. Isso elimina problemas de 401 causados por headers não encaminhados.
+O bot conecta na API do OpenWA via URL pública HTTPS (https://openwa.qwertyatlas.online/api).
 
 ---
 
@@ -22,7 +22,7 @@ O bot conecta **diretamente** na API do OpenWA via rede Docker interna (`openwa-
 
 | Variável | Descrição | Default |
 |---|---|---|
-| `OPENWA_API_URL` | URL direta da API (rede interna Docker) | `http://openwa-api:2785/api` |
+| `OPENWA_API_URL` | URL da API do OpenWA Gateway | `https://openwa.qwertyatlas.online/api` |
 | `OPENWA_API_KEY` | Chave de autenticação da API | _(vazio)_ |
 | `DATABASE_PATH` | Caminho do banco SQLite | `/usr/src/app/data/bot.db` |
 
@@ -50,7 +50,7 @@ Acesse `https://openwa-bot.qwertyatlas.online` e na aba **Configurações** voc�
 O `docker-compose.yml` já está configurado para Coolify com Traefik:
 - Domínio: `openwa-bot.qwertyatlas.online`
 - SSL automático via Let's Encrypt
-- Rede `coolify` (Traefik) + `openwa-internal` (API direta)
+- Rede `coolify` (Traefik)
 
 ### Variáveis obrigatórias no Coolify:
 ```

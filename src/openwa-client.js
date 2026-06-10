@@ -3,14 +3,14 @@ const { getConfig } = require('./config-manager');
 /**
  * Build the base API URL dynamically.
  * Priority:
- *   1. OPENWA_API_URL env var (Docker internal network - direct connection)
+ *   1. OPENWA_API_URL env var (Direct connection / API URL)
  *   2. SQLite config 'openwa_url' (user-configured via dashboard)
  *   3. Fallback default
  *
  * The returned URL always ends with /api
  */
 async function getApiUrl() {
-  // Priority 1: Environment variable (Docker internal network)
+  // Priority 1: Environment variable
   if (process.env.OPENWA_API_URL) {
     let url = process.env.OPENWA_API_URL.trim().replace(/\/$/, '');
     if (!url.endsWith('/api')) {
@@ -21,7 +21,7 @@ async function getApiUrl() {
 
   // Priority 2: SQLite config (user-configured)
   let openwaUrl = await getConfig('openwa_url');
-  let url = (openwaUrl || 'http://openwa-api:2785').trim();
+  let url = (openwaUrl || 'https://openwa.qwertyatlas.online/api').trim();
   url = url.replace(/\/$/, '');
   if (!url.endsWith('/api')) {
     url += '/api';
@@ -109,7 +109,7 @@ async function sendTextMessage(sessionId, chatId, text) {
 async function ensureWebhookRegistered(sessionId) {
   if (!sessionId) return;
 
-  const targetUrl = process.env.BOT_WEBHOOK_URL || 'http://openwa-bot:3000/webhook';
+  const targetUrl = process.env.BOT_WEBHOOK_URL || 'https://openwa-bot.qwertyatlas.online/webhook';
 
   try {
     // 1. Get current webhooks for this session

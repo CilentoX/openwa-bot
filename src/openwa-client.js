@@ -105,6 +105,20 @@ async function sendTextMessage(sessionId, chatId, text) {
   }
 }
 
+/** Send image message via OpenWA API */
+async function sendImageMessage(sessionId, chatId, file, caption) {
+  try {
+    const resData = await openwaRequest(`sessions/${sessionId}/messages/send-image`, {
+      method: 'POST',
+      body: JSON.stringify({ chatId, file, caption })
+    });
+    return { success: true, data: resData };
+  } catch (error) {
+    console.error(`❌ Erro ao enviar imagem (Sessão: ${sessionId}, Chat: ${chatId}): ${error.message}`);
+    return { success: false, error: error.message || error };
+  }
+}
+
 /** Ensure the internal webhook is registered for a given session */
 async function ensureWebhookRegistered(sessionId) {
   if (!sessionId) return;
@@ -139,6 +153,7 @@ module.exports = {
   getApiUrl,
   openwaRequest,
   sendTextMessage,
+  sendImageMessage,
   ensureWebhookRegistered
 };
 

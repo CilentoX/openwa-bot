@@ -145,6 +145,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId, text } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, text, null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar mensagem de texto'); }
   });
@@ -155,6 +158,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId, caption } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, caption ? `📷 ${caption}` : '🖼️ [Imagem]', null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar imagem'); }
   });
@@ -165,6 +171,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId, caption } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, caption ? `🎥 ${caption}` : '🎥 [Vídeo]', null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar vídeo'); }
   });
@@ -175,6 +184,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, '🎙️ [Áudio/Mensagem de voz]', null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar áudio'); }
   });
@@ -185,6 +197,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId, filename } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, filename ? `📄 Documento: ${filename}` : '📄 [Documento]', null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar documento'); }
   });
@@ -195,6 +210,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, '✨ [Figurinha]', null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao enviar sticker'); }
   });
@@ -225,6 +243,9 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify(req.body)
       });
+      const { chatId, text } = req.body;
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, text, null, messageId);
       return reply.code(201).send(data);
     } catch (e) { return sendError(reply, e, 'Erro ao responder mensagem'); }
   });
@@ -308,7 +329,8 @@ async function proxyRoutes(fastify, options) {
         method: 'POST',
         body: JSON.stringify({ chatId, text })
       });
-      await addMessageLog('outgoing', chatId, text);
+      const messageId = data?.id || data?.response?.id;
+      await addMessageLog('outgoing', chatId, text, null, messageId);
       return reply.send({ success: true, message: 'Mensagem enviada com sucesso!', data });
     } catch (error) {
       return reply.code(500).send({ error: `Erro ao enviar mensagem via sessão ${id}`, details: error.message || error });

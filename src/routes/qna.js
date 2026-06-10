@@ -16,7 +16,7 @@ async function qnaRoutes(fastify, options) {
   // POST /api/qna
   fastify.post('/api/qna', async (request, reply) => {
     try {
-      const { question, answer, match_type, priority } = request.body;
+      const { question, answer, image_url, match_type, priority } = request.body;
       if (!question || !answer) {
         return reply.code(400).send({ error: 'Pergunta e resposta são obrigatórios.' });
       }
@@ -26,8 +26,8 @@ async function qnaRoutes(fastify, options) {
       }
 
       const result = await db.run(
-        'INSERT INTO qna (question, answer, match_type, enabled, priority, created_at) VALUES (?, ?, ?, 1, ?, ?)',
-        [question.trim(), answer, match_type, priority || 0, Date.now()]
+        'INSERT INTO qna (question, answer, image_url, match_type, enabled, priority, created_at) VALUES (?, ?, ?, ?, 1, ?, ?)',
+        [question.trim(), answer, image_url || null, match_type, priority || 0, Date.now()]
       );
 
       const newQna = await db.get('SELECT * FROM qna WHERE id = ?', [result.lastID]);
@@ -41,7 +41,7 @@ async function qnaRoutes(fastify, options) {
   fastify.put('/api/qna/:id', async (request, reply) => {
     try {
       const { id } = request.params;
-      const { question, answer, match_type, priority, enabled } = request.body;
+      const { question, answer, image_url, match_type, priority, enabled } = request.body;
 
       if (!question || !answer) {
         return reply.code(400).send({ error: 'Pergunta e resposta são obrigatórios.' });
@@ -52,8 +52,8 @@ async function qnaRoutes(fastify, options) {
       }
 
       await db.run(
-        'UPDATE qna SET question = ?, answer = ?, match_type = ?, priority = ?, enabled = ? WHERE id = ?',
-        [question.trim(), answer, match_type, priority || 0, enabled !== undefined ? enabled : 1, id]
+        'UPDATE qna SET question = ?, answer = ?, image_url = ?, match_type = ?, priority = ?, enabled = ? WHERE id = ?',
+        [question.trim(), answer, image_url || null, match_type, priority || 0, enabled !== undefined ? enabled : 1, id]
       );
 
       const updatedQna = await db.get('SELECT * FROM qna WHERE id = ?', [id]);

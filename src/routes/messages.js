@@ -7,11 +7,22 @@ async function messagesRoutes(fastify, options) {
   fastify.get('/api/messages', async (request, reply) => {
     try {
       const rows = await db.all(
-        'SELECT direction, chat_id as "from", body, timestamp, command FROM message_logs ORDER BY timestamp ASC LIMIT 200'
+        'SELECT id, direction, chat_id as "from", body, timestamp, command, message_id FROM message_logs ORDER BY timestamp ASC LIMIT 200'
       );
       return reply.send(rows);
     } catch (err) {
       return reply.code(500).send({ error: 'Erro ao carregar mensagens', details: err.message });
+    }
+  });
+
+  // DELETE /api/messages/:id
+  fastify.delete('/api/messages/:id', async (request, reply) => {
+    try {
+      const { id } = request.params;
+      await db.run('DELETE FROM message_logs WHERE id = ?', [id]);
+      return reply.send({ success: true, message: 'Mensagem removida do histórico local.' });
+    } catch (err) {
+      return reply.code(500).send({ error: 'Erro ao remover mensagem', details: err.message });
     }
   });
 

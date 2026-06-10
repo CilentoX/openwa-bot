@@ -243,6 +243,16 @@
                 </div>
 
                 <div class="form-group">
+                  <label for="command-image-url">Imagem do Comando (URL ou Upload)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" id="command-image-url" placeholder="https://exemplo.com/imagem.jpg ou base64..." style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('command-image-file').click()" style="padding: 0 12px; height: 38px;" title="Upload do Computador">📁</button>
+                    <input type="file" id="command-image-file" style="display: none;" accept="image/*">
+                  </div>
+                  <small class="input-tip">Se preenchido, o bot enviará esta imagem com o texto acima como legenda.</small>
+                </div>
+
+                <div class="form-group">
                   <label for="command-description">Descrição Interna</label>
                   <input type="text" id="command-description" placeholder="Ex: Exibe ajuda para o usuário">
                   <small class="input-tip">Para ajudar no gerenciamento no dashboard.</small>
@@ -340,6 +350,16 @@
                   <textarea id="qna-answer" rows="5" placeholder="Digite a resposta do bot..." required></textarea>
                 </div>
 
+                <div class="form-group">
+                  <label for="qna-image-url">Imagem do Q&A (URL ou Upload)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" id="qna-image-url" placeholder="https://exemplo.com/imagem.jpg ou base64..." style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('qna-image-file').click()" style="padding: 0 12px; height: 38px;" title="Upload do Computador">📁</button>
+                    <input type="file" id="qna-image-file" style="display: none;" accept="image/*">
+                  </div>
+                  <small class="input-tip">Se preenchido, o bot enviará esta imagem com o texto acima como legenda.</small>
+                </div>
+
                 <div class="form-group row-checkbox">
                   <input type="checkbox" id="qna-enabled" checked>
                   <label for="qna-enabled">Habilitar resposta imediatamente</label>
@@ -419,6 +439,16 @@
                   <label for="menu-message-text">Mensagem de Resposta</label>
                   <textarea id="menu-message-text" rows="6" placeholder="Digite o texto que o bot enviará..." required></textarea>
                   <small class="input-tip">Suporta quebras de linha e emojis do WhatsApp.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="menu-image-url">Imagem do Menu (URL ou Upload)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" id="menu-image-url" placeholder="https://exemplo.com/imagem.jpg ou base64..." style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('menu-image-file').click()" style="padding: 0 12px; height: 38px;" title="Upload do Computador">📁</button>
+                    <input type="file" id="menu-image-file" style="display: none;" accept="image/*">
+                  </div>
+                  <small class="input-tip">Se preenchido, o bot enviará esta imagem com o texto acima como legenda.</small>
                 </div>
 
                 <div class="form-grid-2" style="margin-bottom: 16px;">

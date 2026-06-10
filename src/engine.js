@@ -1,17 +1,19 @@
 const { getDb } = require('./database');
 const { getConfig } = require('./config-manager');
-const { sendTextMessage } = require('./openwa-client');
+const { sendTextMessage, sendImageMessage } = require('./openwa-client');
 const messageEmitter = require('./events');
 
 /** Log message in SQLite and update stats */
-async function addMessageLog(direction, chatId, body, command = null) {
+async function addMessageLog(direction, chatId, body, command = null, messageId = null) {
   try {
     const db = getDb();
     const timestamp = Date.now();
-    await db.run(
-      'INSERT INTO message_logs (direction, chat_id, body, timestamp, command) VALUES (?, ?, ?, ?, ?)',
-      [direction, chatId, body, timestamp, command]
+    const result = await db.run(
+      'INSERT INTO message_logs (direction, chat_id, body, timestamp, command, message_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [direction, chatId, body, timestamp, command, messageId]
     );
+    const localId = result.lastID;
+
     if (direction === 'incoming') {
       await db.run('UPDATE stats SET value = value + 1 WHERE key = "received"');
     } else if (direction === 'outgoing') {
@@ -20,14 +22,19 @@ async function addMessageLog(direction, chatId, body, command = null) {
     
     // Emit the message in real-time
     messageEmitter.emit('message', {
+      id: localId,
+      message_id: messageId,
       direction,
       from: chatId,
       body,
       timestamp,
       command
     });
+
+    return localId;
   } catch (err) {
     console.error(`❌ Erro ao salvar log de mensagem: ${err.message}`);
+    return null;
   }
 }
 
@@ -69,9 +76,10 @@ async function processIncomingMessage(payload) {
   }
 
   // Step 4: Log incoming message
-  await addMessageLog('incoming', chatId, text);
+  await addMessageLog('incoming', chatId, text, null, msg.id);
 
   let replyText = null;
+  let replyImage = null;
   let matchedTrigger = null;
   const nowTime = Date.now();
 
@@ -99,6 +107,7 @@ async function processIncomingMessage(payload) {
           if (parentMenu) {
             await db.run('INSERT OR REPLACE INTO customer_states (chat_id, current_menu_id, updated_at) VALUES (?, ?, ?)', [chatId, parentMenu.id, nowTime]);
             replyText = parentMenu.message_text;
+            replyImage = parentMenu.image_url;
             matchedTrigger = `menu_back:${parentMenu.name}`;
           } else {
             await db.run('DELETE FROM customer_states WHERE chat_id = ?', [chatId]);
@@ -120,6 +129,7 @@ async function processIncomingMessage(payload) {
             await db.run('INSERT OR REPLACE INTO customer_states (chat_id, current_menu_id, updated_at) VALUES (?, ?, ?)', [chatId, matchedChild.id, nowTime]);
           }
           replyText = matchedChild.message_text;
+          replyImage = matchedChild.image_url;
           matchedTrigger = `menu:${matchedChild.name}`;
         } else {
           // 5c. Not a menu option, check if it's a global override command (starting with !)
@@ -127,7 +137,7 @@ async function processIncomingMessage(payload) {
           let ranGlobal = false;
           
           if (isGlobalCommand) {
-            const commands = await db.all('SELECT trigger, response, type FROM commands WHERE enabled = 1');
+            const commands = await db.all('SELECT trigger, response, image_url, type FROM commands WHERE enabled = 1');
             const matchedCommand = commands.find(c => c.trigger.toLowerCase() === text.toLowerCase());
             
             if (matchedCommand) {
@@ -138,6 +148,7 @@ async function processIncomingMessage(payload) {
                 replyText = `🕒 Hora do Servidor: ${new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (BRT)`;
               } else {
                 replyText = matchedCommand.response;
+                replyImage = matchedCommand.image_url;
               }
               ranGlobal = true;
             }
@@ -146,6 +157,7 @@ async function processIncomingMessage(payload) {
           if (!ranGlobal) {
             // Stay in same menu, show invalid option warning and repeat options
             replyText = `⚠️ *Opção Inválida.*\n\n${currentMenu.message_text}`;
+            replyImage = currentMenu.image_url;
             matchedTrigger = 'menu_invalid_option';
           }
         }
@@ -155,7 +167,7 @@ async function processIncomingMessage(payload) {
 
   // Step 6: If not handled by active menu, check global commands (enabled = 1)
   if (!replyText) {
-    const commands = await db.all('SELECT trigger, response, type FROM commands WHERE enabled = 1');
+    const commands = await db.all('SELECT trigger, response, image_url, type FROM commands WHERE enabled = 1');
     const matchedCommand = commands.find(c => c.trigger.toLowerCase() === text.toLowerCase());
 
     if (matchedCommand) {
@@ -165,6 +177,7 @@ async function processIncomingMessage(payload) {
         replyText = `🕒 Hora do Servidor: ${new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (BRT)`;
       } else {
         replyText = matchedCommand.response;
+        replyImage = matchedCommand.image_url;
       }
     }
   }
@@ -178,13 +191,14 @@ async function processIncomingMessage(payload) {
       console.log(`🌳 [Engine] Entrando no menu raiz: ${matchedRoot.name}`);
       await db.run('INSERT OR REPLACE INTO customer_states (chat_id, current_menu_id, updated_at) VALUES (?, ?, ?)', [chatId, matchedRoot.id, nowTime]);
       replyText = matchedRoot.message_text;
+      replyImage = matchedRoot.image_url;
       matchedTrigger = `menu_root:${matchedRoot.name}`;
     }
   }
 
   // Step 8: Check Q&A rules if no command/menu matched
   if (!replyText) {
-    const qnas = await db.all('SELECT question, answer, match_type, priority FROM qna WHERE enabled = 1 ORDER BY priority DESC, id ASC');
+    const qnas = await db.all('SELECT question, answer, image_url, match_type, priority FROM qna WHERE enabled = 1 ORDER BY priority DESC, id ASC');
     console.log(`💬 [Engine] Regras Q&A habilitadas: ${qnas.length}`);
     
     for (const qna of qnas) {
@@ -208,6 +222,7 @@ async function processIncomingMessage(payload) {
       if (isMatch) {
         console.log(`✅ [Engine] Q&A match! Pergunta: "${qna.question}" (${qna.match_type})`);
         replyText = qna.answer;
+        replyImage = qna.image_url;
         matchedTrigger = `qna:${qna.question}`;
         break;
       }
@@ -219,17 +234,34 @@ async function processIncomingMessage(payload) {
   }
 
   // Step 7: Send response if generated
-  if (replyText) {
+  if (replyText || replyImage) {
     console.log(`🤖 [Engine] Respondendo a ${chatId} (sessão: ${sessionId}):`);
-    console.log(`   Resposta: "${replyText.substring(0, 100)}${replyText.length > 100 ? '...' : ''}"`);
+    if (replyText) console.log(`   Texto: "${replyText.substring(0, 100)}${replyText.length > 100 ? '...' : ''}"`);
+    if (replyImage) console.log(`   Imagem: "${replyImage}"`);
     
-    const result = await sendTextMessage(sessionId, chatId, replyText);
+    let result;
+    if (replyImage) {
+      // Send image with caption (if any)
+      result = await sendImageMessage(sessionId, chatId, replyImage, replyText);
+    } else {
+      // Send text only
+      result = await sendTextMessage(sessionId, chatId, replyText);
+    }
     
     if (result.success) {
       console.log(`✅ [Engine] Mensagem enviada com sucesso!`);
-      await addMessageLog('outgoing', chatId, replyText, matchedTrigger);
+      const messageId = result.data?.id || result.data?.response?.id;
+
+      let logImage = replyImage;
+      if (replyImage && replyImage.startsWith('data:')) {
+        logImage = replyImage.substring(0, 50) + '... [Base64]';
+      }
+
+      const logBody = replyImage ? `[IMAGEM: ${logImage}] ${replyText || ''}` : replyText;
+      await addMessageLog('outgoing', chatId, logBody, matchedTrigger, messageId);
       return { status: 'replied', trigger: matchedTrigger };
-    } else {
+    }
+ else {
       console.error(`❌ [Engine] Falha ao enviar: ${result.error}`);
       return { status: 'error_sending', error: result.error };
     }

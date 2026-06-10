@@ -1,7 +1,7 @@
 // === COMMANDS PANEL MODULE ===
 
 import { state } from './state.js';
-import { showFeedback, escapeHtml } from './utils.js';
+import { showFeedback, escapeHtml, fileToBase64 } from './utils.js';
 
 const commandForm = document.getElementById('command-form');
 const commandIdInput = document.getElementById('command-id');
@@ -9,6 +9,8 @@ const commandTriggerInput = document.getElementById('command-trigger');
 const commandTypeSelect = document.getElementById('command-type');
 const commandResponseInput = document.getElementById('command-response');
 const commandResponseGroup = document.getElementById('command-response-group');
+const commandImageUrlInput = document.getElementById('command-image-url');
+const commandImageFileInput = document.getElementById('command-image-file');
 const commandDescriptionInput = document.getElementById('command-description');
 const commandEnabledInput = document.getElementById('command-enabled');
 const commandFormTitle = document.getElementById('command-form-title');
@@ -110,6 +112,7 @@ function resetCommandForm() {
   }
   if (commandTypeSelect) commandTypeSelect.value = 'static';
   if (commandResponseInput) commandResponseInput.value = '';
+  if (commandImageUrlInput) commandImageUrlInput.value = '';
   if (commandResponseGroup) commandResponseGroup.style.display = 'block';
   if (commandDescriptionInput) commandDescriptionInput.value = '';
   if (commandEnabledInput) commandEnabledInput.checked = true;
@@ -118,6 +121,21 @@ function resetCommandForm() {
 }
 
 export function initCommandsPanel() {
+  // File upload handler
+  if (commandImageFileInput) {
+    commandImageFileInput.addEventListener('change', async (e) => {
+      if (e.target.files.length > 0) {
+        try {
+          const base64 = await fileToBase64(e.target.files[0]);
+          if (commandImageUrlInput) commandImageUrlInput.value = base64;
+        } catch (err) {
+          console.error('Erro ao converter imagem:', err);
+          alert('Erro ao carregar imagem do computador.');
+        }
+      }
+    });
+  }
+
   // Preset templates handler
   document.querySelectorAll('.btn-template').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -168,6 +186,7 @@ export function initCommandsPanel() {
         trigger: commandTriggerInput.value.trim(),
         type: commandTypeSelect.value,
         response: commandTypeSelect.value === 'static' ? commandResponseInput.value : '',
+        image_url: commandImageUrlInput.value.trim() || null,
         description: commandDescriptionInput.value.trim(),
         enabled: commandEnabledInput.checked ? 1 : 0
       };
@@ -211,6 +230,7 @@ export function initCommandsPanel() {
     if (commandTriggerInput) commandTriggerInput.value = cmd.trigger;
     if (commandTypeSelect) commandTypeSelect.value = cmd.type || 'static';
     if (commandResponseInput) commandResponseInput.value = cmd.response || '';
+    if (commandImageUrlInput) commandImageUrlInput.value = cmd.image_url || '';
     if (commandDescriptionInput) commandDescriptionInput.value = cmd.description || '';
     if (commandEnabledInput) commandEnabledInput.checked = cmd.enabled === 1;
 

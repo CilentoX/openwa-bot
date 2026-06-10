@@ -35,6 +35,7 @@ async function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       trigger TEXT UNIQUE,
       response TEXT,
+      image_url TEXT,
       description TEXT,
       type TEXT DEFAULT 'static',
       enabled INTEGER DEFAULT 1,
@@ -42,18 +43,27 @@ async function initDb() {
     )
   `);
 
+  try {
+    await dbInstance.exec('ALTER TABLE commands ADD COLUMN image_url TEXT');
+  } catch (err) {}
+
   // 3. Q&A Table
   await dbInstance.exec(`
     CREATE TABLE IF NOT EXISTS qna (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       question TEXT,
       answer TEXT,
+      image_url TEXT,
       match_type TEXT CHECK(match_type IN ('exact', 'contains', 'regex')),
       enabled INTEGER DEFAULT 1,
       priority INTEGER DEFAULT 0,
       created_at INTEGER
     )
   `);
+
+  try {
+    await dbInstance.exec('ALTER TABLE qna ADD COLUMN image_url TEXT');
+  } catch (err) {}
 
   // 4. Message Logs Table
   await dbInstance.exec(`
@@ -66,6 +76,12 @@ async function initDb() {
       command TEXT
     )
   `);
+
+  try {
+    await dbInstance.exec('ALTER TABLE message_logs ADD COLUMN message_id TEXT');
+  } catch (err) {
+    // Column already exists, ignore error
+  }
 
   // 5. Stats Table
   await dbInstance.exec(`
@@ -81,6 +97,7 @@ async function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       message_text TEXT,
+      image_url TEXT,
       parent_id INTEGER,
       trigger_option TEXT,
       is_leaf INTEGER DEFAULT 0,
@@ -88,6 +105,10 @@ async function initDb() {
       created_at INTEGER
     )
   `);
+
+  try {
+    await dbInstance.exec('ALTER TABLE bot_menus ADD COLUMN image_url TEXT');
+  } catch (err) {}
 
   // 7. Customer States Table
   await dbInstance.exec(`

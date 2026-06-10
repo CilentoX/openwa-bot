@@ -16,7 +16,7 @@ async function menusRoutes(fastify, options) {
   // POST /api/menus
   fastify.post('/api/menus', async (request, reply) => {
     try {
-      const { name, message_text, parent_id, trigger_option, is_leaf, enabled } = request.body;
+      const { name, message_text, image_url, parent_id, trigger_option, is_leaf, enabled } = request.body;
       if (!name || !trigger_option || !message_text) {
         return reply.code(400).send({ error: 'Os campos nome, trigger_option e message_text são obrigatórios.' });
       }
@@ -34,10 +34,11 @@ async function menusRoutes(fastify, options) {
       }
 
       const result = await db.run(
-        'INSERT INTO bot_menus (name, message_text, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO bot_menus (name, message_text, image_url, parent_id, trigger_option, is_leaf, enabled, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
           name.trim(),
           message_text,
+          image_url || null,
           parentVal,
           cleanTrigger,
           is_leaf ? 1 : 0,
@@ -57,7 +58,7 @@ async function menusRoutes(fastify, options) {
   fastify.put('/api/menus/:id', async (request, reply) => {
     try {
       const { id } = request.params;
-      const { name, message_text, parent_id, trigger_option, is_leaf, enabled } = request.body;
+      const { name, message_text, image_url, parent_id, trigger_option, is_leaf, enabled } = request.body;
 
       if (!name || !trigger_option || !message_text) {
         return reply.code(400).send({ error: 'Os campos nome, trigger_option e message_text são obrigatórios.' });
@@ -81,10 +82,11 @@ async function menusRoutes(fastify, options) {
       }
 
       await db.run(
-        'UPDATE bot_menus SET name = ?, message_text = ?, parent_id = ?, trigger_option = ?, is_leaf = ?, enabled = ? WHERE id = ?',
+        'UPDATE bot_menus SET name = ?, message_text = ?, image_url = ?, parent_id = ?, trigger_option = ?, is_leaf = ?, enabled = ? WHERE id = ?',
         [
           name.trim(),
           message_text,
+          image_url || null,
           parentVal,
           cleanTrigger,
           is_leaf ? 1 : 0,

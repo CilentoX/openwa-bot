@@ -1,7 +1,7 @@
 // === Q&A (AUTO-RESPONSES) MODULE ===
 
 import { state } from './state.js';
-import { showFeedback, escapeHtml } from './utils.js';
+import { showFeedback, escapeHtml, fileToBase64 } from './utils.js';
 
 const qnaForm = document.getElementById('qna-form');
 const qnaIdInput = document.getElementById('qna-id');
@@ -9,6 +9,8 @@ const qnaQuestionInput = document.getElementById('qna-question');
 const qnaMatchTypeSelect = document.getElementById('qna-match-type');
 const qnaPriorityInput = document.getElementById('qna-priority');
 const qnaAnswerInput = document.getElementById('qna-answer');
+const qnaImageUrlInput = document.getElementById('qna-image-url');
+const qnaImageFileInput = document.getElementById('qna-image-file');
 const qnaEnabledInput = document.getElementById('qna-enabled');
 const qnaFormTitle = document.getElementById('qna-form-title');
 const btnCancelQna = document.getElementById('btn-cancel-qna');
@@ -112,12 +114,28 @@ function resetQnaForm() {
   if (qnaMatchTypeSelect) qnaMatchTypeSelect.value = 'contains';
   if (qnaPriorityInput) qnaPriorityInput.value = 0;
   if (qnaAnswerInput) qnaAnswerInput.value = '';
+  if (qnaImageUrlInput) qnaImageUrlInput.value = '';
   if (qnaEnabledInput) qnaEnabledInput.checked = true;
   if (qnaFormTitle) qnaFormTitle.textContent = '💬 Nova Regra de Auto-Resposta (Q&A)';
   if (btnCancelQna) btnCancelQna.style.display = 'none';
 }
 
 export function initQnaPanel() {
+  // File upload handler
+  if (qnaImageFileInput) {
+    qnaImageFileInput.addEventListener('change', async (e) => {
+      if (e.target.files.length > 0) {
+        try {
+          const base64 = await fileToBase64(e.target.files[0]);
+          if (qnaImageUrlInput) qnaImageUrlInput.value = base64;
+        } catch (err) {
+          console.error('Erro ao converter imagem:', err);
+          alert('Erro ao carregar imagem do computador.');
+        }
+      }
+    });
+  }
+
   // Preset templates handler
   document.querySelectorAll('.btn-qna-template').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -154,6 +172,7 @@ export function initQnaPanel() {
         match_type: qnaMatchTypeSelect.value,
         priority: Number(qnaPriorityInput.value) || 0,
         answer: qnaAnswerInput.value,
+        image_url: qnaImageUrlInput.value.trim() || null,
         enabled: qnaEnabledInput.checked ? 1 : 0
       };
 
@@ -195,6 +214,7 @@ export function initQnaPanel() {
     if (qnaMatchTypeSelect) qnaMatchTypeSelect.value = qna.match_type || 'contains';
     if (qnaPriorityInput) qnaPriorityInput.value = qna.priority || 0;
     if (qnaAnswerInput) qnaAnswerInput.value = qna.answer || '';
+    if (qnaImageUrlInput) qnaImageUrlInput.value = qna.image_url || '';
     if (qnaEnabledInput) qnaEnabledInput.checked = qna.enabled === 1;
 
     if (qnaFormTitle) qnaFormTitle.textContent = '✏️ Editar Regra Q&A';

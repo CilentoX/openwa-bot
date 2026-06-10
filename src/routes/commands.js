@@ -16,7 +16,7 @@ async function commandsRoutes(fastify, options) {
   // POST /api/commands
   fastify.post('/api/commands', async (request, reply) => {
     try {
-      const { trigger, response, description, type } = request.body;
+      const { trigger, response, image_url, description, type } = request.body;
       if (!trigger) {
         return reply.code(400).send({ error: 'O gatilho (trigger) é obrigatório.' });
       }
@@ -28,8 +28,8 @@ async function commandsRoutes(fastify, options) {
       }
 
       const result = await db.run(
-        'INSERT INTO commands (trigger, response, description, type, enabled, created_at) VALUES (?, ?, ?, ?, 1, ?)',
-        [cleanTrigger, response || '', description || '', type || 'static', Date.now()]
+        'INSERT INTO commands (trigger, response, image_url, description, type, enabled, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)',
+        [cleanTrigger, response || '', image_url || null, description || '', type || 'static', Date.now()]
       );
 
       const newCmd = await db.get('SELECT * FROM commands WHERE id = ?', [result.lastID]);
@@ -43,7 +43,7 @@ async function commandsRoutes(fastify, options) {
   fastify.put('/api/commands/:id', async (request, reply) => {
     try {
       const { id } = request.params;
-      const { trigger, response, description, type, enabled } = request.body;
+      const { trigger, response, image_url, description, type, enabled } = request.body;
 
       if (!trigger) {
         return reply.code(400).send({ error: 'O gatilho (trigger) é obrigatório.' });
@@ -56,8 +56,8 @@ async function commandsRoutes(fastify, options) {
       }
 
       await db.run(
-        'UPDATE commands SET trigger = ?, response = ?, description = ?, type = ?, enabled = ? WHERE id = ?',
-        [cleanTrigger, response || '', description || '', type || 'static', enabled !== undefined ? enabled : 1, id]
+        'UPDATE commands SET trigger = ?, response = ?, image_url = ?, description = ?, type = ?, enabled = ? WHERE id = ?',
+        [cleanTrigger, response || '', image_url || null, description || '', type || 'static', enabled !== undefined ? enabled : 1, id]
       );
 
       const updatedCmd = await db.get('SELECT * FROM commands WHERE id = ?', [id]);

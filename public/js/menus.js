@@ -1,7 +1,7 @@
 // === INTERACTIVE MENUS (URA) MODULE ===
 
 import { state } from './state.js';
-import { showFeedback, escapeHtml } from './utils.js';
+import { showFeedback, escapeHtml, fileToBase64 } from './utils.js';
 
 const menuForm = document.getElementById('menu-form');
 const btnCancelMenu = document.getElementById('btn-cancel-menu');
@@ -71,6 +71,7 @@ function buildNodeHTML(node) {
           <span>🌳</span>
           <strong>${escapeHtml(node.name)}</strong>
           <span class="tree-node-badge">Acionador: "${escapeHtml(node.trigger_option)}"</span>
+          ${node.image_url ? '<span class="tree-node-badge" style="background: #3b82f6;">📷 Com Imagem</span>' : ''}
           ${isLeaf ? '<span class="tree-node-badge badge-leaf">Finalizador (Leaf)</span>' : ''}
           ${!isEnabled ? '<span class="tree-node-badge badge-disabled">Inativo</span>' : ''}
         </div>
@@ -114,6 +115,23 @@ function resetMenuForm() {
 }
 
 export function initMenusPanel() {
+  const menuImageFileInput = document.getElementById('menu-image-file');
+  const menuImageUrlInput = document.getElementById('menu-image-url');
+
+  if (menuImageFileInput) {
+    menuImageFileInput.addEventListener('change', async (e) => {
+      if (e.target.files.length > 0) {
+        try {
+          const base64 = await fileToBase64(e.target.files[0]);
+          if (menuImageUrlInput) menuImageUrlInput.value = base64;
+        } catch (err) {
+          console.error('Erro ao converter imagem:', err);
+          alert('Erro ao carregar imagem do computador.');
+        }
+      }
+    });
+  }
+
   if (btnCancelMenu) {
     btnCancelMenu.addEventListener('click', resetMenuForm);
   }
@@ -128,6 +146,7 @@ export function initMenusPanel() {
         parent_id: document.getElementById('menu-parent-id').value || null,
         trigger_option: document.getElementById('menu-trigger-option').value.trim(),
         message_text: document.getElementById('menu-message-text').value,
+        image_url: document.getElementById('menu-image-url').value.trim() || null,
         is_leaf: document.getElementById('menu-is-leaf').checked ? 1 : 0,
         enabled: document.getElementById('menu-enabled').checked ? 1 : 0
       };
@@ -170,6 +189,7 @@ export function initMenusPanel() {
     const menuParentIdSelect = document.getElementById('menu-parent-id');
     const menuTriggerInput = document.getElementById('menu-trigger-option');
     const menuMessageText = document.getElementById('menu-message-text');
+    const menuImageUrlInput = document.getElementById('menu-image-url');
     const menuIsLeaf = document.getElementById('menu-is-leaf');
     const menuEnabled = document.getElementById('menu-enabled');
     const menuFormTitle = document.getElementById('menu-form-title');
@@ -179,6 +199,7 @@ export function initMenusPanel() {
     if (menuParentIdSelect) menuParentIdSelect.value = menu.parent_id || '';
     if (menuTriggerInput) menuTriggerInput.value = menu.trigger_option;
     if (menuMessageText) menuMessageText.value = menu.message_text;
+    if (menuImageUrlInput) menuImageUrlInput.value = menu.image_url || '';
     if (menuIsLeaf) menuIsLeaf.checked = menu.is_leaf === 1;
     if (menuEnabled) menuEnabled.checked = menu.enabled === 1;
     

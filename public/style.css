@@ -1677,6 +1677,262 @@ body {
   gap: 8px;
 }
 
+/* =============================================================================
+   Dedicated WhatsApp Web UI Chat Tab Styles
+   ============================================================================= */
+.chat-main-card {
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.chat-split-container {
+  height: 600px; /* Increased height for full-screen feel */
+  background: var(--bg-secondary);
+}
+
+.chat-sidebar {
+  width: 320px; /* Slightly wider sidebar for readability */
+}
+
+/* New Sidebar Header with Profile Info and Filter Tabs */
+.chat-sidebar-header-new {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(27, 35, 54, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-profile-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-my-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-my-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-my-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chat-my-status {
+  font-size: 0.72rem;
+  color: var(--color-green);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-my-status::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-green);
+}
+
+/* Sidebar Chat Filter Buttons ("Ativas" vs "Arquivadas") */
+.chat-filter-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-filter-chat {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+  font-family: var(--font-family-body);
+}
+
+.btn-filter-chat:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.btn-filter-chat.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--color-green);
+  color: var(--color-green);
+  font-weight: 600;
+}
+
+/* Search Bar (WhatsApp Web style) */
+.chat-search-bar-container {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(18, 24, 36, 0.2);
+}
+
+.chat-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 6px 12px;
+  gap: 8px;
+}
+
+.chat-search-icon {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+#chat-contact-search {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  width: 100%;
+  font-family: var(--font-family-body);
+}
+
+#chat-contact-search::placeholder {
+  color: var(--text-muted);
+}
+
+/* Header Action Buttons (Archive / Unarchive) */
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-header-action {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-family-body);
+}
+
+.btn-header-action:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  background: var(--bg-tertiary);
+}
+
+#btn-archive-active-chat:hover {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+#btn-unarchive-active-chat:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+/* Chat Bubbles Layout Updates */
+.msg-bubble-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 65%;
+  margin-bottom: 2px;
+}
+
+.msg-incoming {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.msg-outgoing {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.msg-bubble {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.msg-incoming .msg-bubble {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-top-left-radius: 0;
+}
+
+.msg-outgoing .msg-bubble {
+  background: #005c4b; /* WhatsApp Dark Outgoing Green */
+  color: #e9edef;
+  border-top-right-radius: 0;
+}
+
+.msg-jid {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.msg-outgoing .msg-jid {
+  color: #53bdeb;
+}
+
+.msg-text {
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.msg-meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.msg-outgoing .msg-meta {
+  justify-content: flex-end;
+}
+
+
 
 
 

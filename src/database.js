@@ -98,6 +98,14 @@ async function initDb() {
     )
   `);
 
+  // 8. Archived Chats Table
+  await dbInstance.exec(`
+    CREATE TABLE IF NOT EXISTS archived_chats (
+      chat_id TEXT PRIMARY KEY,
+      archived_at INTEGER
+    )
+  `);
+
   // Seed default stats
   await dbInstance.run('INSERT OR IGNORE INTO stats (key, value) VALUES ("received", 0)');
   await dbInstance.run('INSERT OR IGNORE INTO stats (key, value) VALUES ("sent", 0)');

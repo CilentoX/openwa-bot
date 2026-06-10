@@ -38,19 +38,97 @@
 
     <!-- Navigation Tabs -->
     <nav class="tab-navbar">
-      <button class="tab-button active" data-tab="config">⚙️ Configuração</button>
+      <button class="tab-button active" data-tab="chat">💬 Chat</button>
+      <button class="tab-button" data-tab="config">⚙️ Configuração</button>
       <button class="tab-button" data-tab="commands">🤖 Comandos</button>
       <button class="tab-button" data-tab="qna">💬 Q&A (Auto-Respostas)</button>
       <button class="tab-button" data-tab="menus">🌳 URA / Menus</button>
-      <button class="tab-button" data-tab="monitor">📡 Monitor (Chat/Sessões)</button>
+      <button class="tab-button" data-tab="monitor">📡 Painel de Controle</button>
       <button class="tab-button" data-tab="stats">📊 Estatísticas</button>
     </nav>
 
     <!-- Tab Contents -->
     <main class="tab-content">
 
+      <!-- ==================== TAB: CHAT (WHATSAPP WEB) ==================== -->
+      <div class="tab-pane active" id="tab-chat">
+        <div class="card chat-main-card">
+          <!-- Chat Split Panel -->
+          <div class="chat-split-container">
+            <!-- Left Sidebar: Conversations -->
+            <div class="chat-sidebar">
+              <!-- Sidebar Header with Profile and Active/Archived Filter -->
+              <div class="chat-sidebar-header-new">
+                <div class="chat-profile-section">
+                  <div class="chat-my-avatar">🤖</div>
+                  <div class="chat-my-info">
+                    <span class="chat-my-name" id="chat-my-pushname">Meu Bot</span>
+                    <span class="chat-my-status">Online</span>
+                  </div>
+                </div>
+                <div class="chat-filter-buttons">
+                  <button type="button" class="btn-filter-chat active" id="btn-filter-active">Ativas</button>
+                  <button type="button" class="btn-filter-chat" id="btn-filter-archived">Arquivadas</button>
+                </div>
+              </div>
+              
+              <!-- Search bar (WhatsApp Web style) -->
+              <div class="chat-search-bar-container">
+                <div class="chat-search-input-wrapper">
+                  <span class="chat-search-icon">🔍</span>
+                  <input type="text" id="chat-contact-search" placeholder="Pesquisar ou começar uma conversa...">
+                </div>
+              </div>
+              
+              <div class="chat-list" id="chat-list-container">
+                <!-- Loaded dynamically -->
+                <div class="no-chats-placeholder">
+                  Sem conversas ativas.
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Screen: Active conversation messages -->
+            <div class="chat-screen" id="active-chat-screen">
+              <!-- Active conversation header -->
+              <div class="chat-screen-header" id="chat-screen-header" style="display: none;">
+                <div class="chat-header-avatar">👤</div>
+                <div class="chat-header-info">
+                  <h4 id="chat-header-title">-</h4>
+                  <span class="chat-header-subtitle" id="chat-header-status">Online</span>
+                </div>
+                <!-- Actions on Header (e.g. Archive current chat) -->
+                <div class="chat-header-actions">
+                  <button type="button" class="btn-header-action" id="btn-archive-active-chat" title="Arquivar conversa">📥 Arquivar</button>
+                  <button type="button" class="btn-header-action" id="btn-unarchive-active-chat" style="display: none;" title="Desarquivar conversa">📤 Desarquivar</button>
+                </div>
+              </div>
+
+              <!-- Messages container wrapper -->
+              <div class="messages-feed-wrapper" id="messages-feed">
+                <div class="no-messages-placeholder">
+                  <div class="placeholder-icon">💬</div>
+                  <h2>OpenWA Web</h2>
+                  <p>Selecione uma conversa ao lado para começar.</p>
+                </div>
+              </div>
+
+              <!-- Quick Reply Input Bar -->
+              <div class="chat-reply-bar" id="chat-reply-bar" style="display: none;">
+                <form id="chat-reply-form" class="reply-form">
+                  <input type="text" id="chat-reply-input" placeholder="Digite uma mensagem..." required>
+                  <button type="submit" class="btn btn-accent btn-small" style="background: #00a884; border-color: #00a884;">
+                    <span>Enviar</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== TAB 1: CONFIGURATION ==================== -->
-      <div class="tab-pane active" id="tab-config">
+      <div class="tab-pane" id="tab-config">
         <div class="config-grid">
           <!-- Config Form Card -->
           <div class="card config-card-main">
@@ -379,7 +457,7 @@
 
       <!-- ==================== TAB 4: MONITOR ==================== -->
       <div class="tab-pane" id="tab-monitor">
-        <div class="dashboard-grid">
+        <div class="two-col-grid">
           <!-- COLUMN 1: SESSIONS & GROUPS -->
           <section class="grid-col left-column">
             <!-- Create Session Card -->
@@ -488,65 +566,7 @@
             </div>
           </section>
 
-          <!-- COLUMN 2: LIVE CHAT & FEED -->
-          <section class="grid-col feed-column">
-            <div class="card chat-feed-card">
-              <div class="card-header">
-                <div class="header-with-actions">
-                  <h3>💬 Monitor de Chat (Tempo Real)</h3>
-                  <div class="header-buttons">
-                    <button class="btn btn-small btn-clear" id="btn-clear-feed">Limpar Feed</button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Chat Split Panel -->
-              <div class="chat-split-container">
-                <!-- Left Sidebar: Conversations -->
-                <div class="chat-sidebar">
-                  <div class="chat-sidebar-header">
-                    <h4>Chats Recentes</h4>
-                  </div>
-                  <div class="chat-list" id="chat-list-container">
-                    <!-- Loaded dynamically -->
-                    <div class="no-chats-placeholder" style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem;">
-                      Sem conversas ativas.
-                    </div>
-                  </div>
-                </div>
 
-                <!-- Right Screen: Active conversation messages -->
-                <div class="chat-screen" id="active-chat-screen">
-                  <!-- Active conversation header -->
-                  <div class="chat-screen-header" id="chat-screen-header" style="display: none;">
-                    <div class="chat-header-avatar">👤</div>
-                    <div class="chat-header-info">
-                      <h4 id="chat-header-title">-</h4>
-                      <span class="chat-header-subtitle">Chat Ativo</span>
-                    </div>
-                  </div>
-
-                  <!-- Messages container wrapper -->
-                  <div class="messages-feed-wrapper" id="messages-feed">
-                    <div class="no-messages-placeholder">
-                      <div class="placeholder-icon">💬</div>
-                      <p>Selecione um contato ou grupo na barra lateral para visualizar a conversa em tempo real.</p>
-                    </div>
-                  </div>
-
-                  <!-- Quick Reply Input Bar -->
-                  <div class="chat-reply-bar" id="chat-reply-bar" style="display: none;">
-                    <form id="chat-reply-form" class="reply-form">
-                      <input type="text" id="chat-reply-input" placeholder="Digite uma mensagem rápida..." required>
-                      <button type="submit" class="btn btn-accent btn-small">
-                        <span>Enviar</span>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
 
           <!-- COLUMN 3: WEBHOOK & TEST ACTIONS -->
           <section class="grid-col right-column">
@@ -729,6 +749,6 @@
     </main>
   </div>
   <!-- App JS -->
-  <script src="app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

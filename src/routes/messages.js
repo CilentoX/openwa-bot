@@ -102,6 +102,38 @@ async function messagesRoutes(fastify, options) {
       return reply.code(500).send({ error: 'Erro ao buscar histórico de estatísticas', details: err.message });
     }
   });
+
+  // GET /api/archived-chats
+  fastify.get('/api/archived-chats', async (request, reply) => {
+    try {
+      const rows = await db.all('SELECT chat_id FROM archived_chats');
+      return reply.send(rows.map(r => r.chat_id));
+    } catch (err) {
+      return reply.code(500).send({ error: 'Erro ao listar chats arquivados', details: err.message });
+    }
+  });
+
+  // POST /api/archived-chats/:jid/archive
+  fastify.post('/api/archived-chats/:jid/archive', async (request, reply) => {
+    try {
+      const { jid } = request.params;
+      await db.run('INSERT OR IGNORE INTO archived_chats (chat_id, archived_at) VALUES (?, ?)', [jid, Date.now()]);
+      return reply.send({ success: true, message: 'Chat arquivado com sucesso.' });
+    } catch (err) {
+      return reply.code(500).send({ error: 'Erro ao arquivar chat', details: err.message });
+    }
+  });
+
+  // POST /api/archived-chats/:jid/unarchive
+  fastify.post('/api/archived-chats/:jid/unarchive', async (request, reply) => {
+    try {
+      const { jid } = request.params;
+      await db.run('DELETE FROM archived_chats WHERE chat_id = ?', [jid]);
+      return reply.send({ success: true, message: 'Chat desarquivado com sucesso.' });
+    } catch (err) {
+      return reply.code(500).send({ error: 'Erro ao desarquivar chat', details: err.message });
+    }
+  });
 }
 
 module.exports = messagesRoutes;
